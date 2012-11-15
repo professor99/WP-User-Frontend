@@ -1,3 +1,5 @@
+//9-10-12 A.Bruin Fixed submit editor required bug
+ 
 jQuery(document).ready(function($) {
 
     var WPUF_Obj = {
@@ -17,7 +19,7 @@ jQuery(document).ready(function($) {
         checkSubmit: function () {
             var form = $(this);
 
-            form.find('.requiredField').each(function() {
+            $('*',this).each(function() {
                 if( $(this).hasClass('invalid') ) {
                     $(this).removeClass('invalid');
                 }
@@ -26,21 +28,23 @@ jQuery(document).ready(function($) {
             var hasError = false;
 
             $(this).find('.requiredField').each(function() {
-                var el = $(this),
-                labelText = el.prev('label').text();
+                var el = $(this);
 
                 if(jQuery.trim(el.val()) == '') {
-                    el.addClass('invalid');
+                    //Highlights closest visible container.
+                    //Still slight bug in tinyMCE editor when submitted when display tab is "HTML"
+                    //In this case the "Visible" tab won't be highlighted but this is very insignificant.
+                    el.closest(':visible').addClass('invalid');
                     hasError = true;
                 } else if(el.hasClass('email')) {
                     var emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
                     if(!emailReg.test($.trim(el.val()))) {
-                        el.addClass('invalid');
+                        el.closest(':visible').addClass('invalid');
                         hasError = true;
                     }
                 } else if(el.hasClass('cat')) {
                     if( el.val() == '-1' ) {
-                        el.addClass('invalid');
+                        el.closest(':visible').addClass('invalid');
                         hasError = true;
                     }
                 }

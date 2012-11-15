@@ -1,5 +1,18 @@
 <?php
-
+/**
+ * Wpuf Settings Options
+ *
+ * @author Tareq Hasan 
+ * @package WP User Frontend
+ *
+ * Modified by Andy Bruin of KnockThemDeadProductions for 2RRR. 
+ * Version: 1.1 fork: 2RRR 1.0
+ *
+ * Changes
+ *
+ * Added Close label for Close button
+ */
+ 
 /**
  * Get the value of a settings field
  *
@@ -112,7 +125,12 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'submit_label',
                 'label' => __( 'Post submit button label', 'wpuf' ),
-                'default' => 'Submit Post!'
+                'default' => 'Submit Post'
+            ),
+            array(
+                'name' => 'close_label',
+                'label' => __( 'Close button label', 'wpuf' ),
+                'default' => 'Close'
             ),
             array(
                 'name' => 'update_label',

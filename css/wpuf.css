@@ -19,7 +19,7 @@
     cursor: pointer;
 }
 
-.wpuf-post-form input, .wpuf-post-form textarea, .wpuf-post-form select{
+.wpuf-post-form input, .wpuf-post-form select{
     margin: 0;
     padding: 5px;
     border: 1px solid #ccc;
@@ -27,6 +27,7 @@
     -moz-border-radius: 5px;
     border-radius: 5px;
 }
+
 
 .wpuf-post-form input:focus, .wpuf-post-form textarea:focus, .wpuf-post-form select:focus{
     background: #F2F2F2;
@@ -40,8 +41,19 @@
     width: 50%;
 }
 
-.wpuf-post-form textarea{
-    width: 70%;
+
+.wpuf-post-form textarea {
+    margin: 0;
+    padding: 5px;
+    font-size: 12px;
+    width: 100%;
+}
+
+.editor-plain {
+    margin-top: 5px!important;
+    border: 1px solid #ccc;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
 }
 
 .wpuf-post-form input[type=submit], .wpuf-submit, .wpuf-button{
@@ -55,6 +67,25 @@
     background: -moz-linear-gradient(top, #eeeeee 0%, #cccccc 100%); /* firefox */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#cccccc)); /* webkit */
     cursor: pointer;
+}
+
+#wpuf-submit-li{
+    text-align: center;
+}
+
+#wpuf-button-close{
+    text-align: center;
+}
+
+#wpuf-button-close a{
+    text-decoration: none;
+}
+
+#wpuf-button-close a:link,
+#wpuf-button-close a:visited,
+#wpuf-button-close a:hover,
+#wpuf-button-close a:active{
+    color: #000000;
 }
 
 .wpuf-post-form input[type=submit]:active, .wpuf-submit:active, .wpuf-button:active{
@@ -85,19 +116,25 @@
     line-height: 0px;
 }
 
+#wpuf-info {
+    height: 32px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
 .success {
+    margin: 0 10px 10px 10px;
+    padding: 3px 10px;
+    color: #4F8A10;
     background-color: #DFF2BF;
     border: 1px solid #BCDF7D;
-    color: #4F8A10;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: bold;
     margin-bottom: 10px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     border-radius: 5px;
     text-shadow: 0 1px 0 #FFFFFF;
     font-size: 13px;
+    font-weight: bold;
 }
 
 
@@ -110,9 +147,9 @@
     border-radius: 5px;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
-    font-weight: bold;
     text-shadow: 0 1px 0 #FFFFFF;
     font-size: 13px;
+    font-weight: bold;
 }
 
 .info {
@@ -162,6 +199,10 @@
 
 #wpuf-post-area li{
     list-style: none;
+}
+
+#wpuf-post-area table{
+    margin: 0;
 }
 
 span.required {

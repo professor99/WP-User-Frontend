@@ -7,6 +7,14 @@ Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
 Version: 1.1
 Author URI: http://tareq.weDevs.com
+
+Modified by Andy Bruin of KnockThemDeadProductions for 2RRR. 
+Version: 1.1 fork: 2RRR 1.0
+
+Changes
+
+Set TinyMCE to start in Visual mode.
+Addition of $submit_msg variable for Ajax submits.
 */
 
 if ( !class_exists( 'WeDevs_Settings_API' ) ) {
@@ -36,6 +44,10 @@ require_once 'wpuf-subscription.php';
 require_once 'wpuf-payment.php';
 require_once 'lib/attachment.php';
 require_once 'lib/gateway/paypal.php';
+
+//BugFix: Use of Wordpress dashboard can leave tinymce editor in "HTML" mode.
+//This forces tinymce to "Visual" mode on start.
+add_filter( 'wp_default_editor', create_function('', 'return "tinymce";') );
 
 class WPUF_Main {
 
@@ -133,10 +145,13 @@ class WPUF_Main {
 
         wp_enqueue_script( 'wpuf', $path . '/js/wpuf.js', array('jquery') );
 
+        $submit_msg = wpuf_get_option( 'submit_label' );
         $posting_msg = wpuf_get_option( 'updating_label' );
+
         $feat_img_enabled = ( wpuf_get_option( 'enable_featured_image' ) == 'yes') ? true : false;
         wp_localize_script( 'wpuf', 'wpuf', array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
+            'submit_msg' => $submit_msg,
             'postingMsg' => $posting_msg,
             'confirmMsg' => __( 'Are you sure?', 'wpuf' ),
             'nonce' => wp_create_nonce( 'wpuf_nonce' ),
