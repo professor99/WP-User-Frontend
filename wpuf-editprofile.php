@@ -1,5 +1,27 @@
 <?php
 
+/**
+ * EditProfile class
+ *
+ * @author Tareq Hasan
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0 
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Suppress "edit_post_link" on this page
+* Added wpuf prefix to some class names
+*/
+
+/**
+ * Edit Profile Class
+ * 
+ * @package WP User Frontend
+ * @subpackage WPUF_Edit_Profile
+ */
 class WPUF_Edit_Profile {
 
     function __construct() {
@@ -18,6 +40,8 @@ class WPUF_Edit_Profile {
      * @author Tareq Hasan
      */
     function shortcode() {
+		//Suppress "edit_post_link" on this page
+		add_filter( 'edit_post_link', function(){}, 10, 1 ); 
 
         ob_start();
 
@@ -61,10 +85,10 @@ class WPUF_Edit_Profile {
             $errors = edit_user( $user_id );
             if ( is_wp_error( $errors ) ) {
                 $message = $errors->get_error_message();
-                $style = 'error';
+                $style = 'wpuf-error';
             } else {
                 $message = __( '<strong>Success</strong>: Profile updated', 'wpuf' );
-                $style = 'success';
+                $style = 'wpuf-success';
                 do_action( 'personal_options_update', $user_id );
             }
         }

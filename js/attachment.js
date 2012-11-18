@@ -1,3 +1,18 @@
+/**
+ * WP User Frontend Attachment Javascript
+ *
+ * @author Tareq Hasan
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0 
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Updated delete for attachment list
+*/
+
 jQuery(document).ready(function($) {
 
     var WPUF_Attachment = {
@@ -88,7 +103,7 @@ jQuery(document).ready(function($) {
                 };
 
                 $.post(wpuf.ajaxurl, data, function(){
-                    el.parent().parent().remove();
+                    el.parent().remove();
 
                     window.wpufFileCount -= 1;
                     if(WPUF_Attachment.maxFiles !== 0 && window.wpufFileCount < WPUF_Attachment.maxFiles ) {

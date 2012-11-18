@@ -5,25 +5,36 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- *
- * Extensively modified by Andy Bruin of KnockThemDeadProductions for 2RRR. 
- * Version: 1.1 fork: 2RRR 1.0 alpha
- *
- * Main Changes from Version 1.1:
- * 
- * Custom editor option added.
- * Editors use max availiable width.
- * Close button added as shortcut option and redirects set to suit.
- * wpuf_allow_cats filter added.
- * Security checks updated.
- * Code updated to allow use of wpuf_can_post filter for non-logged in users.
- */ 
+ * @version 1.1-fork-2RRR-2.0 
+ */
+
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Now uses jquery.form to do Ajax style updates.
+* Post redirect shortcut option added.
+* Better info and error messages.
+* Suppress "edit_post_link" on this page
+* Added wpuf prefix to some css classes
+* Re-styled buttons.
+* Re-styled attachment display
+
+= 1.1-fork-2RRR-1.0 professor99 =
+* Custom editor option added.
+* Editors use max availiable width.
+* Close button added as shortcut option and redirects set to suit.
+* wpuf_allow_cats filter added.
+* Security checks updated.
+* Code updated to allow use of wpuf_can_post filter for non logged in users.
+*/
 
 /*
  *  Shortcode examples::
  * 
  * 	[wpuf_addpost]
  * 	[wpuf_addpost close="false"]
+ * 	[wpuf_addpost close="false" redirect="none"]
  * 
  *  Shortcode options:
  * 
@@ -33,55 +44,157 @@
  * 	close: true | false 
  * 		true: will display close button and redirect to last page on close (default)
  * 		false: 
+ * 	redirect: none | auto | current | new | last 
+ * 		none: do nothing
+ * 		auto: If close==true will load last page on post. 
+ *		      Else will reload current page on post. (default)
+ * 		current: will reload current page on post
+ * 		new: will load new page on post
+ * 		last: will load last page on post 
  */
-
- class WPUF_Add_Post {
+ 
+/**
+ * Add Post Class
+ * 
+ * @package WP User Frontend
+ * @subpackage WPUF_Add_Post
+ */
+class WPUF_Add_Post {
+	var $wpuf_self = '';
 	var $wpuf_referer = '';
 
+	
 	function __construct() {
+		add_action( 'wp_enqueue_scripts', array($this, 'enqueue_scripts') );
+		
+		//hook the Ajax call
+		//for logged-in users
+		add_action('wp_ajax_wpuf_add_post_action', array($this, 'submit_post'));
+		//for none logged-in users
+		add_action('wp_ajax_nopriv_wpuf_add_post_action', array($this, 'submit_post'));
+		
 		add_shortcode( 'wpuf_addpost', array($this, 'shortcode') );
 	}
 
 	/**
-	* Handles the add post shortcode
-	*
-	* @param $atts
-	*/
+	 * Queue up jQuery and jQuery-form
+	 *
+	 * @since 1.1-fork-2RRR-2.0 
+	 */
+	function enqueue_scripts() {
+		//Add scripts only if post has shortcode
+        if ( has_shortcode( 'wpuf_addpost' ) ) {
+			wp_enqueue_script( 'jquery' );
+			wp_enqueue_script( 'jquery-form' );
+			
+			//Add ajaxForm javascript for form submit
+			add_action('wp_head', array($this, 'wpuf_add_post_javascript'));
+        }
+	}	
+	
+	/**
+	 * Adds javascript for ajaxForm
+	 *
+	 * @return string html
+	 * @since 1.1-fork-2RRR-2.0 
+	 */
+	function wpuf_add_post_javascript() {
+	//Note if a file upload is included this uses an iframe instead of Ajax for the current Wordpress 3.4.2 version
+	//which uses jquery.form version 2.73. Versions of jquery.form 2.90 and later can use html5 ajax to do this.
+	//For iframe uploads timeout and error functions wont fire.
+?>
+		<script type="text/javascript">
+		jQuery(document).ready(function() {
+			var options = { 
+				datatype:	'xml',
+				beforeSubmit: wpuf_add_post_before_submit,
+				success:	wpuf_add_post_success,
+				error:		wpuf_add_post_error,
+				timeout:	3000, 
+				url:		wpuf.ajaxurl,
+				data:		{ action: 'wpuf_add_post_action' }
+			}
+
+			// bind form using 'ajaxForm' 
+			jQuery('#wpuf_new_post_form').ajaxForm(options);
+		});
+
+		function wpuf_add_post_before_submit(formData, jqForm, options) { 
+			jQuery('#wpuf-info-msg').html('&nbsp;');
+		}
+		
+		function wpuf_add_post_success(responseXML) { 
+			success = $('success', responseXML).text();
+			message = $('message', responseXML).html();
+			post_id = $('post_id', responseXML).text();
+			redirect_url = $('redirect_url', responseXML).text();
+			//alert('success=' + success + '\nmessage=' + message + '\npost_id=' + post_id + '\nredirect_url=' + redirect_url);
+			
+			jQuery('#wpuf-info-msg').html(message);
+			jQuery('#wpuf-info-msg').fadeTo(0,1);
+
+			if (success == "true") {
+				if (redirect_url != "") {
+					setTimeout(function() {window.location.replace(redirect_url), 3000});
+				} else {
+					jQuery('#wpuf-info-msg').fadeTo(4000,0);
+					jQuery('#wpuf_new_post_form').resetForm();
+					jQuery('#wpuf_new_post_form').clearForm();
+					
+					jQuery('#wpuf_new_post_form .wpuf-submit').attr({
+						'value': wpuf.submit_msg,
+						'disabled': false
+					});	
+				}
+			}
+			else {
+				jQuery('#wpuf_new_post_form .wpuf-submit').attr({
+					'value': wpuf.submit_msg,
+					'disabled': false
+				});	
+			}
+		}
+		
+		function wpuf_add_post_error(XMLHttpRequest, textStatus, errorThrown) {
+			//triggered on ajax errors including timeout.
+			jQuery("#wpuf-info-msg").html = '<div class="wpuf-error">Error: ' + textStatus + '</div>';
+		}
+		</script>	
+<?php
+	}
+
+	
+	/**
+	 * Handles the add post shortcode
+	 *
+	 * @param array $atts attributes
+	 * @return string generated form by the plugin
+	 * @global WP_User $userdata
+	 */
 	function shortcode( $atts ) {
 		global $userdata;
-		
-		//echo '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_GET=' . print_r($_GET,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>'; 
 
-		extract( shortcode_atts( array('post_type' => 'post', 'close' => 'true'), $atts ) );
+		//echo '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_GET=' . print_r($_GET,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>'; 
+		
+		extract( shortcode_atts( array('post_type' => 'post', 'close' => 'true', 'redirect' => 'auto'), $atts ) );
+
+		//Suppress "edit_post_link" on this page
+		add_filter( 'edit_post_link', function(){}, 10, 1 ); 
 
 		ob_start();
 
 		//Set referer URL. 
 		//NB Stop XSS attacks by using htmlspecialchars.
-		if ( isset( $_POST['wpuf_post_new_submit'] ) ) {
-			$this->wpuf_referer = htmlspecialchars($_POST['wpuf_referer']);
-		} else if (isset( $_GET['wpuf_referer'] ) ) {
+		if (isset( $_GET['wpuf_referer'] ) ) {
+			//login referral
 			$this->wpuf_referer = htmlspecialchars($_GET['wpuf_referer']);
-		} else if ($close == "true") {
-			$this->wpuf_referer = htmlspecialchars($_SERVER['HTTP_REFERER']);
 		} else {
-			$this->wpuf_referer = "http://" . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
+			$this->wpuf_referer = htmlspecialchars($_SERVER['HTTP_REFERER']);
 		}
 
-		//Use this filter if you want to change the return address on Close or Post
-		$this->wpuf_referer = apply_filters( 'wpuf_add_post_referer_filter', $this->wpuf_referer, $post_type );
-
-		// If POST and nonce matches submit post
-		if ( isset( $_POST['wpuf_post_new_submit'] ) ) {
-			$nonce = $_REQUEST['_wpnonce'];
-			
-			if ( !wp_verify_nonce( $nonce, 'wpuf-add-post' ) ) {
-				wp_die( __( 'Cheating?' ) );
-			}
-
-			$this->submit_post();
-		}
-
+		//URL of this page
+		$this->wpuf_self = "http://" . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
+		
 		if (!is_user_logged_in() ) {
 			$can_post = 'no';
 			$info = __( "User is not logged in.", 'wpuf' );
@@ -111,10 +224,10 @@
 		$info = apply_filters( 'wpuf_addpost_notice', $info );
 
 		if ( $can_post == 'yes' ) {
-			$this->post_form( $post_type );
+			$this->post_form( $post_type, $close, $redirect );
 		}
 		else {
-			echo '<div class="info">' . $info . '</div>';
+			echo '<div class="wpuf-info">' . $info . '</div>';
 		}
 
 		//Use this filter if you want to change the return address on Close
@@ -125,47 +238,51 @@
 			//echo '<div id="wpuf-button-close"><a class="wpuf-button" href="' . $wpuf_close_redirect . '">Close</a></div>';
 			echo '<div id="wpuf-button-close"><a class="wpuf-button" href="' . $wpuf_close_redirect . '">' . esc_attr( wpuf_get_option( 'close_label' ) ) . '</a></div>';
 		}
-		
+
 		$content = ob_get_contents();
 		ob_end_clean();
 
 		return $content;
 	}
 
+
 	/**
 	 * Add posting main form
 	 *
-	 * @param $post_type
+	 * @param string $post_type post type
+	 * @param string $close Display Close Button "true"|"false"
+	 * @param string $redirect Redirect after post "auto"|"current"|"last"|"new"
+	 * @return string html
 	 */
-	function post_form( $post_type ) {
+	function post_form( $post_type, $close, $redirect ) {
 		$featured_image = wpuf_get_option( 'enable_featured_image' );
-		$title = isset( $_POST['wpuf_post_title'] ) ? esc_attr( $_POST['wpuf_post_title'] ) : '';
-		$description = isset( $_POST['wpuf_post_content'] ) ? $_POST['wpuf_post_content'] : '';
+		$title = '';
+		$description = '';				
 ?>
 		<div id="wpuf-post-area">
 			<form id="wpuf_new_post_form" name="wpuf_new_post_form" action="" enctype="multipart/form-data" method="POST">
 				<?php wp_nonce_field( 'wpuf-add-post' ) ?>
 
 				<ul class="wpuf-post-form">
-					<?php
+					<?php 
 					do_action( 'wpuf_add_post_form_top', $post_type ); //plugin hook
 					wpuf_build_custom_field_form( 'top' );
 
 					if ( $featured_image == 'yes' ) {
 						if ( current_theme_supports( 'post-thumbnails' ) ) {
 					?>
-							<li>
+							<li id="wpuf-ft-upload-li">
 								<label for="post-thumbnail"><?php echo wpuf_get_option( 'ft_image_label' ); ?></label>
 								<div id="wpuf-ft-upload-container">
 									<div id="wpuf-ft-upload-filelist"></div>
-									<a id="wpuf-ft-upload-pickfiles" class="button" href="#"><?php echo wpuf_get_option( 'ft_image_btn_label' ); ?></a>
+									<a id="wpuf-ft-upload-pickfiles" class="wpuf-button" href="#"><?php echo wpuf_get_option( 'ft_image_btn_label' ); ?></a>
 								</div>
 								<div class="clear"></div>
 							</li>
 						<?php } else { ?>
-							<div class="info"><?php _e( 'Your theme doesn\'t support featured image', 'wpuf' ) ?></div>
+							<div class="wpuf-info"><?php _e( 'Your theme doesn\'t support featured image', 'wpuf' ) ?></div>
 						<?php
-						}
+						} 
 					} ?>
 
 					<li>
@@ -178,10 +295,7 @@
 					</li>
 						
 					<?php
-					$allow_cats = wpuf_get_option( 'allow_cats' ); 
-					$allow_cats = apply_filters( 'wpuf_allow_cats', $allow_cats );
-
-					if ( $allow_cats == 'on' ) {
+					if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
 					?>
 						<li>
 							<label for="new-post-cat">
@@ -227,12 +341,12 @@
 
 						if ( $editor == 'full' ) {
 							wp_editor( $description, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => false, 'textarea_rows' => 8) ); 
-						} else if ( $editor == 'rich' ) { 
+						} else if ( $editor == 'rich' ) {
 							wp_editor( $description, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => true, 'textarea_rows' => 8) ); 
 						} else if ( $editor == 'plain' ) { 
 						?>
 						<div class="clear"></div>
-							<textarea name="wpuf_post_content" class="requiredField editor-plain" id="new-post-desc" cols="60" rows="8"><?php echo esc_textarea( $description ); ?></textarea>
+							<textarea name="wpuf_post_content" class="requiredField wpuf-editor-plain" id="new-post-desc" cols="60" rows="8"><?php echo esc_textarea( $description ); ?></textarea>
 						<?php } else { 
 							//Use custom editor. 
 							//Two ways to enable.
@@ -271,9 +385,12 @@
 					?>
 
 					<li id="wpuf-submit-li">
+						<div id="wpuf-info-msg">&nbsp;</div>
 						<input class="wpuf-submit" type="submit" name="wpuf_new_post_submit" value="<?php echo esc_attr( wpuf_get_option( 'submit_label' ) ); ?>">
 						<input type="hidden" name="wpuf_post_type" value="<?php echo $post_type; ?>" />
-						<input type="hidden" name="wpuf_post_new_submit" value="yes" />
+						<input type="hidden" name="wpuf_close" value="<?php echo $close ?>" />
+						<input type="hidden" name="wpuf_redirect" value="<?php echo $redirect ?>" />
+						<input type="hidden" name="wpuf_self" value="<?php echo $this->wpuf_self ?>" />
 						<input type="hidden" name="wpuf_referer" value="<?php echo $this->wpuf_referer ?>" />
 					</li>
 
@@ -285,6 +402,7 @@
 <?php
 	}
 
+	
 	/**
 	 * Prints the post publish date on form
 	 *
@@ -338,6 +456,7 @@
 <?php
 	}
 
+	
 	/**
 	* Prints post expiration date on the form
 	*
@@ -371,15 +490,25 @@
 <?php
 	}
 
+	
 	/**
-	* Validate the post submit data
+	* Validate and insert post message.
+	* Called by AjaxForm on form submit.
+	* Returns XML message via AjaxForm.
 	*
-	* @global type $userdata
-	* @param type $post_type
+	 * @global WP_User $userdata
 	*/
 	function submit_post() {
 		global $userdata;
-
+		
+		//echo '<root><success>false></success><message><div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div></message></root>'; 
+ 
+		if ( !wp_verify_nonce( $_REQUEST['_wpnonce'], 'wpuf-add-post' ) ) {
+			//XML message
+			echo '<root><success>false</success><message>' . wpuf_error_msg( __( 'Cheating?' ) ) . '</message></root>';
+			exit;
+		}
+		
 		$errors = array();
 
 		//if there is some attachement, validate them
@@ -404,10 +533,7 @@
 
 		//validate category
 
-		$allow_cats = wpuf_get_option( 'allow_cats' ); 
-		$allow_cats = apply_filters( 'wpuf_allow_cats', $allow_cats );
-
-		if ( $allow_cats == 'on' ) {
+		if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
 			$cat_type = wpuf_get_option( 'cat_type' );
 			if ( !isset( $_POST['category'] ) ) {
 				$errors[] = __( 'Please choose a category', 'wpuf' );
@@ -479,8 +605,9 @@
 
 		//if not any errors, proceed
 		if ( $errors ) {
-			echo wpuf_error_msg( $errors );
-			return;
+			//XML message
+			echo '<root><success>false</success><message>' . wpuf_error_msg( $errors ) . '</message></root>';
+			exit;
 		}
 
 		$post_stat = wpuf_get_option( 'post_status' );
@@ -493,11 +620,8 @@
 			$post_author = wpuf_get_option( 'map_author' );
 		}
 
-		$allow_cats = wpuf_get_option( 'allow_cats' );
-		$allow_cats = apply_filters( 'wpuf_allow_cats', $allow_cats );
-					
 		//Set category to default if users aren't allowed to choose category
-		if ( $allow_cats == 'on' ) {
+		if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
 			$post_category = $_POST['category'];
 		} else {
 			$post_category = array(wpuf_get_option( 'default_cat' ));
@@ -528,14 +652,14 @@
 		$my_post = apply_filters( 'wpuf_add_post_args', $my_post );
 
 		//var_dump( $_POST, $my_post );die();
-
+		
 		//insert the post
 		$post_id = wp_insert_post( $my_post, true);
 
 		//if insert post ok, proceed
 		if (is_wp_error($post_id)) {
-			 echo wpuf_error_msg($post_id->get_error_message());
-			 return;
+			 echo '<root><success>false</success><message>' . wpuf_error_msg( __( 'Post insert failed. ', 'wpuf' ) . $post_id->get_error_message()) . '</message></root>';
+			 exit;
 		}	 
 		
 		//upload attachment to the post
@@ -576,17 +700,54 @@
 		//plugin API to extend the functionality
 		do_action( 'wpuf_add_post_after_insert', $post_id );
 
-		echo '<div class="success">' . __('Post published successfully', 'wpuf') . '</div>';
-
-		//$redirect = apply_filters( 'wpuf_after_post_redirect', get_permalink( $post_id ), $post_id );
-		$redirect = apply_filters( 'wpuf_after_post_redirect', $this->wpuf_referer, $post_id );
-
-		if ($redirect) {
-			wp_redirect( $redirect );
-			exit;
+		//Set after post redirect
+		switch ($_POST['wpuf_redirect']) {
+			case "auto":
+				if ($_POST['wpuf_close'] == true) {
+					$redirect_url = $_POST['wpuf_referer'];
+				} else {
+					$redirect_url = $_POST['wpuf_self'];
+				}
+				break;
+			case "current":
+				$redirect_url = $_POST['wpuf_self'];
+				break;
+			case "last":
+				$redirect_url = $_POST['wpuf_referer'];
+				break;
+			case "new":
+				$redirect_url = get_permalink( $post_id );
+				break;
+			default:
+				$redirect_url = "";
 		}
+
+		$redirect_url = apply_filters( 'wpuf_after_post_redirect', $redirect_url, $post_id );
+		
+		$post_status = get_post_status($post_id);
+
+		switch ($post_status) {
+			case "publish":
+				echo '<root><success>true</success><message><div class="wpuf-success">' . __('Post published successfully', 'wpuf') . '</div></message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+				break;
+			case "pending":
+				echo '<root><success>true</success><message><div class="wpuf-success">' . __('Post pending review', 'wpuf') . '</div></message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+				break;
+			case "draft":
+				echo '<root><success>true</success><message><div class="wpuf-success">' . __('Post saved as draft', 'wpuf') . '</div></message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+				break;
+			case "future":
+				echo '<root><success>true</success><message><div class="wpuf-success">' . __('Post to be published in future', 'wpuf') . '</div></message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+				break;
+			default:
+				echo '<root><success>true</success><message><div class="wpuf-success">' . __('Post status', 'wpuf') . ': ' . $post_status . '</div></message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+		}
+		
+		exit;
 	}
 
 }
 
+
 $wpuf_postform = new WPUF_Add_Post();
+

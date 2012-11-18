@@ -3,9 +3,20 @@
 /**
  * Attachment Uploader class
  *
- * @since 0.8
+ * @author Tareq Hasan 
  * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0 
+ * @since 0.8
  */
+
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Re-styled attachments.
+* Only add scripts for add/edit post shortcodes
+*/
+
 class WPUF_Attachment {
 
     function __construct() {
@@ -24,16 +35,15 @@ class WPUF_Attachment {
     }
 
     function scripts() {
-        if ( has_shortcode( 'wpuf_addpost' ) || has_shortcode( 'wpuf_edit' ) || has_shortcode( 'wpuf_dashboard' ) ) {
+        //Only include scripts for add/edit post shortcodes
+        if ( has_shortcode( 'wpuf_addpost' ) || has_shortcode( 'wpuf_edit' ) ) {
 
             $max_file_size = intval( wpuf_get_option( 'attachment_max_size' ) ) * 1024;
             $max_upload = intval( wpuf_get_option( 'attachment_num' ) );
             $attachment_enabled = wpuf_get_option( 'allow_attachment' );
 
             wp_enqueue_script( 'jquery' );
-            if ( has_shortcode( 'wpuf_addpost' ) || has_shortcode( 'wpuf_edit' ) ) {
-                wp_enqueue_script( 'plupload-handlers' );
-            }
+            wp_enqueue_script( 'plupload-handlers' );
             wp_enqueue_script( 'jquery-ui-sortable' );
             wp_enqueue_script( 'wpuf_attachment', plugins_url( 'js/attachment.js', dirname( __FILE__ ) ), array('jquery') );
 
@@ -84,7 +94,7 @@ class WPUF_Attachment {
                         ?>
                     </ul>
                 </div>
-                <a id="wpuf-attachment-upload-pickfiles" class="button" href="#"><?php echo wpuf_get_option( 'attachment_btn_label' ); ?></a>
+                <a id="wpuf-attachment-upload-pickfiles" class="wpuf-button" href="#"><?php echo wpuf_get_option( 'attachment_btn_label' ); ?></a>
             </div>
             <div class="clear"></div>
         </li>
@@ -125,14 +135,17 @@ class WPUF_Attachment {
     function attach_html( $attach_id ) {
 
         $attachment = get_post( $attach_id );
-
+        $fileurl = wp_get_attachment_url($attach_id);
+        $filebase =  esc_attr( basename($fileurl) );
+		
         $html = '';
         $html .= '<li class="wpuf-attachment">';
         $html .= '<span class="handle">Move</span>';
+		$html .= '<span class="required">*&nbsp;</span>';
         $html .= '<span class="attachment-title">';
-        $html .= sprintf( '<input type="text" name="wpuf_attach_title[]" value="%s" placeholder="%s" />', esc_attr( $attachment->post_title ), esc_attr__( 'Insert Song Title', 'wpuf' ) );
+        $html .= sprintf( '<input type="text" class="requiredField" name="wpuf_attach_title[]" value="%s" placeholder="%s" title="%s"/>', esc_attr( $attachment->post_title ), esc_attr__( 'Title', 'wpuf' ), esc_attr__( 'Title', 'wpuf' ) );
         $html .= '</span>';
-        $html .= sprintf( '<span class="attachment-name">%s</span>', esc_attr( $attachment->post_title ) );
+        $html .= sprintf( '<a class="attachment-name" href="%s">%s</span>', $fileurl, $filebase );
         $html .= sprintf( '<span class="attachment-actions"><a href="#" class="track-delete button" data-attach_id="%d">%s</a></span>', $attach_id, __( 'Delete', 'wpuf' ) );
         $html .= sprintf( '<input type="hidden" name="wpuf_attach_id[]" value="%d" />', $attach_id );
         $html .= '</li>';

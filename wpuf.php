@@ -5,16 +5,18 @@ Plugin Name: WP User Frontend
 Plugin URI: http://tareq.wedevs.com/2011/01/new-plugin-wordpress-user-frontend/
 Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
-Version: 1.1
+Version: 1.1-fork-2RRR-2.0
 Author URI: http://tareq.weDevs.com
 
-Modified by Andy Bruin of KnockThemDeadProductions for 2RRR. 
-Version: 1.1 fork: 2RRR 1.0
+Extensively modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
 
-Changes
+== Changelog ==
 
-Set TinyMCE to start in Visual mode.
-Addition of $submit_msg variable for Ajax submits.
+= 1.1-fork-2RRR-2.0 professor99 =
+* Addition of $submit_msg and $update_msg variables for Ajax submits.
+
+= 1.1-fork-2RRR-1.0 professor99 =
+* Set TinyMCE to start in Visual mode.
 */
 
 if ( !class_exists( 'WeDevs_Settings_API' ) ) {
@@ -146,12 +148,14 @@ class WPUF_Main {
         wp_enqueue_script( 'wpuf', $path . '/js/wpuf.js', array('jquery') );
 
         $submit_msg = wpuf_get_option( 'submit_label' );
+        $update_msg = wpuf_get_option( 'update_label' );
         $posting_msg = wpuf_get_option( 'updating_label' );
 
         $feat_img_enabled = ( wpuf_get_option( 'enable_featured_image' ) == 'yes') ? true : false;
         wp_localize_script( 'wpuf', 'wpuf', array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'submit_msg' => $submit_msg,
+            'update_msg' => $update_msg,
             'postingMsg' => $posting_msg,
             'confirmMsg' => __( 'Are you sure?', 'wpuf' ),
             'nonce' => wp_create_nonce( 'wpuf_nonce' ),

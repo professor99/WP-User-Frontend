@@ -2,17 +2,23 @@
 /**
  * Wpuf Settings Options
  *
- * @author Tareq Hasan 
- * @package WP User Frontend
- *
- * Modified by Andy Bruin of KnockThemDeadProductions for 2RRR. 
- * Version: 1.1 fork: 2RRR 1.0
- *
- * Changes
- *
- * Added Close label for Close button
+ *@author Tareq Hasan 
+ *@package WP User Frontend
+ *@version 1.1-fork-2RRR-2.0
  */
- 
+
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Added wpuf_get_option filter
+* Attachment label changed to 'Add attachment'
+* Removed ! from 'Update Post!'
+
+= 1.1-fork-2RRR-1.0 professor99 =
+* Added Close label for Close button
+*/
+
 /**
  * Get the value of a settings field
  *
@@ -39,11 +45,12 @@ function wpuf_get_option( $option ) {
 
     //return the value if found, otherwise default
     if ( array_key_exists( $option, $opt ) ) {
-        return $opt[$option];
+        $val = $opt[$option];
     } else {
         $val = isset( $prepared_fields[$option]['default'] ) ? $prepared_fields[$option]['default'] : '';
-        return $val;
     }
+	
+	return apply_filters( 'wpuf_get_option', $val, $option );
 }
 
 /**
@@ -135,7 +142,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'update_label',
                 'label' => __( 'Post update button label', 'wpuf' ),
-                'default' => 'Update Post!'
+                'default' => 'Update Post'
             ),
             array(
                 'name' => 'updating_label',
@@ -161,7 +168,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'attachment_btn_label',
                 'label' => __( 'Attachment upload button', 'wpuf' ),
-                'default' => 'Add another'
+                'default' => 'Add attachment'
             ),
         ) ),
         'wpuf_frontend_posting' => apply_filters( 'wpuf_options_frontend', array(

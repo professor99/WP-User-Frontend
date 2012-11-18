@@ -5,6 +5,23 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0 
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Fixed author delete bug .
+* Suppress "edit_post_link" on this page
+* Added wpuf prefix to some class names
+*/
+
+/**
+ * Dashboard Class
+ * 
+ * @package WP User Frontend
+ * @subpackage WPUF_Dashboard
  */
 class WPUF_Dashboard {
 
@@ -24,6 +41,9 @@ class WPUF_Dashboard {
 
         extract( shortcode_atts( array('post_type' => 'post'), $atts ) );
 
+        //Suppress "edit_post_link" on this page
+        add_filter( 'edit_post_link', function(){}, 10, 1 ); 
+		
         ob_start();
 
         if ( is_user_logged_in() ) {
@@ -57,7 +77,7 @@ class WPUF_Dashboard {
 
         //show delete success message
         if ( isset( $_GET['msg'] ) && $_GET['msg'] == 'deleted' ) {
-            echo '<div class="success">' . __( 'Post Deleted', 'wpuf' ) . '</div>';
+            echo '<div class="wpuf-success">' . __( 'Post Deleted', 'wpuf' ) . '</div>';
         }
 
         $args = array(
@@ -229,7 +249,7 @@ class WPUF_Dashboard {
      */
     function delete_post() {
         global $userdata;
-        
+
         $nonce = $_REQUEST['_wpnonce'];
         if ( !wp_verify_nonce( $nonce, 'wpuf_del' ) ) {
             die( "Security check" );
@@ -245,7 +265,7 @@ class WPUF_Dashboard {
             $redirect = add_query_arg( array('msg' => 'deleted'), get_permalink() );
             wp_redirect( $redirect );
         } else {
-            echo '<div class="error">' . __( 'You are not the post author. Cheeting huh!', 'wpuf' ) . '</div>';
+            echo '<div class="wpuf-error">' . __( 'You are not the post author. Cheeting huh!', 'wpuf' ) . '</div>';
         }
     }
 

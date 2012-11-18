@@ -1,6 +1,24 @@
 <?php
 
 /**
+ * WP User Frontend General Functions
+ *
+ * @author Tareq Hasan
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0 
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Added wpuf prefix to some class names
+* Updated has_shortcode() to do exact match of shortcode 
+* Re-styled attachments.
+* Display only links for attachments (looks terrible otherwise)
+*/
+
+/**
  * Start output buffering
  *
  * This is needed for redirecting to post when a new post has made
@@ -69,7 +87,7 @@ function wpuf_error_msg( $error_msg ) {
     $msg_string = '';
     foreach ($error_msg as $value) {
         if ( !empty( $value ) ) {
-            $msg_string = $msg_string . '<div class="error">' . $msg_string = $value . '</div>';
+            $msg_string = $msg_string . '<div class="wpuf-error">' . $msg_string = $value . '</div>';
         }
     }
     return $msg_string;
@@ -440,7 +458,7 @@ function has_shortcode( $shortcode = '', $post_id = false ) {
     }
 
     // check the post content for the short code
-    if ( stripos( $post_to_check->post_content, '[' . $shortcode ) !== false ) {
+    if ( preg_match( '/\[' . $shortcode . '[ \]]/i', $post_to_check->post_content ) ) {
         // we have found the short code
         $found = true;
     }
@@ -556,17 +574,12 @@ function wpuf_show_meta_front( $content ) {
         $attachments = wpfu_get_attachments( $post->ID );
 
         if ( $attachments ) {
-            $attach = '<ul class="wpuf-attachments">';
+            $attach = '<label class="wpuf-attachments-label">' . wpuf_get_option( 'attachment_label' ) . '</label>';
+
+            $attach .= '<ul class="wpuf-attachments">';
 
             foreach ($attachments as $file) {
-
-                //if the attachment is image, show the image. else show the link
-                if ( wpuf_is_file_image( $file['url'], $file['mime'] ) ) {
-                    $thumb = wp_get_attachment_image_src( $file['id'] );
-                    $attach .= sprintf( '<li><a href="%s"><img src="%s" alt="%s" /></a></li>', $file['url'], $thumb[0], esc_attr( $file['title'] ) );
-                } else {
-                    $attach .= sprintf( '<li><a href="%s" title="%s">%s</a></li>', $file['url'], esc_attr( $file['title'] ), $file['title'] );
-                }
+                $attach .= sprintf( '<li><a href="%s" title="%s">%s</a></li>', $file['url'], esc_attr( $file['title'] ), $file['title'] );
             }
 
             $attach .= '</ul>';
@@ -693,7 +706,7 @@ function wpuf_permalink_nag() {
     if ( current_user_can( 'manage_options' ) )
         $msg = sprintf( __( 'You need to set your <a href="%1$s">permalink custom structure</a> to at least contain <b>/&#37;postname&#37;/</b> before WP User Frontend will work properly.', 'wpuf' ), 'options-permalink.php' );
 
-    echo "<div class='error fade'><p>$msg</p></div>";
+    echo "<div class='wpuf-error fade'><p>$msg</p></div>";
 }
 
 //if not found %postname%, shows a error msg at admin panel
@@ -800,8 +813,6 @@ function wpuf_header_css() {
     $css = wpuf_get_option( 'custom_css' );
     ?>
     <style type="text/css">
-        ul.wpuf-attachments{ list-style: none; overflow: hidden;}
-        ul.wpuf-attachments li {float: left; margin: 0 10px 10px 0;}
         <?php echo $css; ?>
     </style>
     <?php

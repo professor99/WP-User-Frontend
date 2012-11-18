@@ -1,4 +1,24 @@
-//9-10-12 A.Bruin Fixed submit editor required bug
+/**
+ * Javascript bootstrap 
+ *
+ * @author Tareq Hasan 
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Add 'required' message 
+* Added TinyMCE triggerSave to fix editor submit bug
+* Added wpuf prefix to some class names
+* Rename wpuf-info-msg
+
+= 1.1-fork-2RRR-1.0 professor99 =
+* Fixed submit editor required bug
+*/
+
  
 jQuery(document).ready(function($) {
 
@@ -19,9 +39,16 @@ jQuery(document).ready(function($) {
         checkSubmit: function () {
             var form = $(this);
 
+            //Save tinymce iframe to textarea
+            if (typeof(tinyMCE) != "undefined") {
+                tinyMCE.triggerSave();
+            }
+
+            $('#wpuf-info-msg').html('&nbsp;');
+
             $('*',this).each(function() {
-                if( $(this).hasClass('invalid') ) {
-                    $(this).removeClass('invalid');
+                if( $(this).hasClass('wpuf-invalid') ) {
+                    $(this).removeClass('wpuf-invalid');
                 }
             });
 
@@ -34,17 +61,17 @@ jQuery(document).ready(function($) {
                     //Highlights closest visible container.
                     //Still slight bug in tinyMCE editor when submitted when display tab is "HTML"
                     //In this case the "Visible" tab won't be highlighted but this is very insignificant.
-                    el.closest(':visible').addClass('invalid');
+                    el.closest(':visible').addClass('wpuf-invalid');
                     hasError = true;
                 } else if(el.hasClass('email')) {
                     var emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
                     if(!emailReg.test($.trim(el.val()))) {
-                        el.closest(':visible').addClass('invalid');
+                        el.closest(':visible').addClass('wpuf-invalid');
                         hasError = true;
                     }
                 } else if(el.hasClass('cat')) {
                     if( el.val() == '-1' ) {
-                        el.closest(':visible').addClass('invalid');
+                        el.closest(':visible').addClass('wpuf-invalid');
                         hasError = true;
                     }
                 }
@@ -58,6 +85,8 @@ jQuery(document).ready(function($) {
 
                 return true;
             }
+			
+            $('#wpuf-info-msg').html('<div class="wpuf-error">Required field(s) empty.</div>');
 
             return false;
         },

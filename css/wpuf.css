@@ -1,10 +1,32 @@
+/**
+ * WP User Frontend Main Css
+ *
+ * @author Tareq Hasan 
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-2.0
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-2.0 professor99 =
+* Added wpuf prefix to some class names
+* Set list style
+* Added "Upload Image" button.
+* Re-styled buttons.
+* Re-styled attachments.
+
+= 1.1-fork-2RRR-1.0 professor99 =
+* Plain editor css added.
+* Close button added* wpuf_allow_cats filter added.
+* Add info field css and updated success and error classes
+* Editors use max availiable width.
+* Centered submit button.
+*/
+
 .wpuf-post-form{
     list-style: none;
     margin: 0;
-    padding: 0;
-}
-.wpuf-post-form li{
-    margin: 5px 0;
     padding: 0;
 }
 
@@ -49,7 +71,7 @@
     width: 100%;
 }
 
-.editor-plain {
+.wpuf-editor-plain {
     margin-top: 5px!important;
     border: 1px solid #ccc;
     -moz-border-radius: 5px;
@@ -59,14 +81,15 @@
 .wpuf-post-form input[type=submit], .wpuf-submit, .wpuf-button{
     -moz-border-radius: 5px;
     border-radius: 5px;
-    color: #333;
+    color: #444!important;
     padding: 5px 10px;
     border: 1px solid #ccc;
-    text-shadow: 0 1px 0 #FFFFFF;
+    text-shadow: 0 1px 0 #DDDDDD;
     background: #eeeeee; /* old browsers */
     background: -moz-linear-gradient(top, #eeeeee 0%, #cccccc 100%); /* firefox */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#cccccc)); /* webkit */
     cursor: pointer;
+    margin-bottom: 10px;
 }
 
 #wpuf-submit-li{
@@ -77,15 +100,27 @@
     text-align: center;
 }
 
-#wpuf-button-close a{
+a.wpuf-button{
     text-decoration: none;
+    font-family: "Helvetica Neue",Arial,Helvetica,"Nimbus Sans L",sans-serif;
 }
 
-#wpuf-button-close a:link,
-#wpuf-button-close a:visited,
-#wpuf-button-close a:hover,
-#wpuf-button-close a:active{
-    color: #000000;
+a.wpuf-button:link,
+a.wpuf-button:visited,
+a.wpuf-button:hover,
+a.wpuf-button:active{
+    color: #444444;
+}
+
+#wpuf-post-area ul li{
+    list-style: none;
+    background: none;
+    margin: 5px 0;
+    padding: 0;
+}
+
+ul li#wpuf-ft-upload-li{
+    margin-bottom: 20px;
 }
 
 .wpuf-post-form input[type=submit]:active, .wpuf-submit:active, .wpuf-button:active{
@@ -116,13 +151,13 @@
     line-height: 0px;
 }
 
-#wpuf-info {
+#wpuf-info-msg {
     height: 32px;
     margin-top: 10px;
     margin-bottom: 10px;
 }
 
-.success {
+.wpuf-success {
     margin: 0 10px 10px 10px;
     padding: 3px 10px;
     color: #4F8A10;
@@ -138,7 +173,7 @@
 }
 
 
-.error {
+.wpuf-error {
     margin: 0 10px 10px 10px;
     padding: 3px 10px;
     color: #D8000C;
@@ -152,7 +187,7 @@
     font-weight: bold;
 }
 
-.info {
+.wpuf-info {
     background-color: #fef5be;
     border: 2px solid #fdd425;
     border-radius: 5px;
@@ -195,10 +230,6 @@
 #content #editorcontainer tr td, #content #editorcontainer table {
     padding: 0;
     margin: 0;
-}
-
-#wpuf-post-area li{
-    list-style: none;
 }
 
 #wpuf-post-area table{
@@ -283,7 +314,7 @@ table.wpuf-table td {
     padding-top: 8px;
 }
 
-.invalid {
+.wpuf-invalid {
     border: 1px solid #FF7272 !important;
 }
 
@@ -446,6 +477,10 @@ ul.wpuf_packs p {
     color: #5F5F5F;
 }
 
+#wpuf-ft-upload-pickfiles {
+    padding: 3px 8px;
+}
+
 ul.wpuf-category-checklist {
     margin: 0;
     list-style: none;
@@ -457,6 +492,20 @@ ul.wpuf-category-checklist {
 .wpuf-post-form .category-wrap select {
     display: block;
     margin: 0 0 5px 0;
+}
+
+ul.wpuf-attachments{ 
+    list-style: square inside none;
+    margin: 0;
+}
+
+.wpuf-attachments-label {
+    color: #888888;
+    font-size: 12px;
+    font-weight: bold;
+    height: 20px;
+    margin: 0;
+    padding: 10px 0;
 }
 
 #wpuf-attachment-upload-filelist .wpuf-attachment {
@@ -482,13 +531,7 @@ ul.wpuf-category-checklist {
 }
 
 #wpuf-attachment-upload-pickfiles {
-    font-weight: bold;
-    color: #333;
     padding: 3px 8px;
-    border: 1px solid #ccc;
-    background: #f2f2f2;
-    margin: 5px 0 15px 0;
-    border-radius: 5px;
 }
 
 #wpuf-attachment-upload-filelist .handle {
