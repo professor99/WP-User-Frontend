@@ -60,7 +60,7 @@ http://2rrr.org.au/downloads/wp-user-frontend/wp-user-frontend_1_1_2RRR_2_0_alph
 
 A Github repository is availiable
 
-https://github.com/professor99/WP-User-Frontend
+https://github.com/professor99/WP-User-Frontend/tree/2RRR
 
 Examples
 ---------
