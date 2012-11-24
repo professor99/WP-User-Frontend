@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-2.1 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-2.1 professor99 = 
+* Replaced anonymous function with suppress_edit_post_link()
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Suppress "edit_post_link" on this page
@@ -35,13 +38,13 @@ class WPUF_Edit_Profile {
     }
 
     /**
-     * Hanldes the editprofile shortcode
+     * Handles the editprofile shortcode
      *
      * @author Tareq Hasan
      */
     function shortcode() {
-		//Suppress "edit_post_link" on this page
-		add_filter( 'edit_post_link', function(){}, 10, 1 ); 
+        //Suppress "edit_post_link" on this page
+        add_filter( 'edit_post_link', suppress_edit_post_link, 10, 2 ); 
 
         ob_start();
 

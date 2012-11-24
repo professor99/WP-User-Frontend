@@ -1,4 +1,4 @@
-README WP User Frontend Version: 1.1-fork-2RRR-2.0 alpha
+README WP User Frontend Version: 1.1-fork-2RRR-2.1 alpha
 ========================================================
 
 Modified Code: Andy Bruin (professor99)
@@ -56,7 +56,7 @@ http://wordpress.org/support/plugin/wp-user-frontend
 Download
 --------
 
-http://2rrr.org.au/downloads/wp-user-frontend/wp-user-frontend_1_1_2RRR_2_0_alpha.zip
+http://2rrr.org.au/downloads/wp-user-frontend/wp-user-frontend_1_1_2RRR_2_1_alpha.zip
 
 A Github repository is availiable
 
@@ -125,6 +125,9 @@ Then copy the files across.
 
 Changelog
 ---------
+
+= 1.1-fork-2RRR-2.1 professor99 = 
+* Replaced anonymous function with suppress_edit_post_link()
 
 = 1.1-fork-2RRR-2.0 professor99 = 
 * Now uses jquery.form to do Ajax style updates.

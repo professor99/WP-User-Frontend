@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-2.1 
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-2.1 professor99 = 
+* Replaced anonymous function with suppress_edit_post_link()
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Now uses jquery.form to do Ajax style updates.
@@ -179,7 +182,7 @@ class WPUF_Add_Post {
 		extract( shortcode_atts( array('post_type' => 'post', 'close' => 'true', 'redirect' => 'auto'), $atts ) );
 
 		//Suppress "edit_post_link" on this page
-		add_filter( 'edit_post_link', function(){}, 10, 1 ); 
+		add_filter( 'edit_post_link', suppress_edit_post_link, 10, 2 ); 
 
 		ob_start();
 
@@ -244,7 +247,6 @@ class WPUF_Add_Post {
 
 		return $content;
 	}
-
 
 	/**
 	 * Add posting main form

@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-2.1 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-2.1 professor99 =
+* Added suppress_edit_post_link()
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Added wpuf prefix to some class names
@@ -836,3 +839,16 @@ function wpuf_get_image_sizes() {
 
     return $image_sizes;
 }
+
+/**
+ * Suppress edit post link
+ *
+ * @param string $link
+ * @param int $post_id
+ * @return string null
+ * @since version 1.1-fork-2RRR-2.1 
+ */
+function suppress_edit_post_link( $link, $post_id ) {
+    return '';
+} 
+
