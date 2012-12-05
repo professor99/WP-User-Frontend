@@ -1,4 +1,4 @@
-README WP User Frontend Version: 1.1-fork-2RRR-2.1 alpha
+README WP User Frontend Version: 1.1-fork-2RRR-3.0 alpha
 ========================================================
 
 Modified Code: Andy Bruin (professor99)
@@ -12,9 +12,18 @@ It is a major update of WP User Frontend concentrating on useability and custome
 It focuses on Add Post and Edit Post functionality.
 There are some bug fixes included as well.
 
-This version adds Ajax form style updates and better error and info messages.
-It also adds the ability to filter options.
-There are some additional bug fixes included as well.
+The main differences from 1.1-fork-2RRR-2.1 follow:
+
+- Optionally add Excerpts to the Add/Edit Post forms.
+- Add/Edit Post forms re-styled to suit excerpts.
+- Publish and expiration times can now be edited on the Edit Post form.
+- A Delete button can be optionally added to the Edit Post Form.
+- Attachment/Featured Image buttons fixed for Flash/Silverlight.
+- CSS has been strengthed for use in other themes.
+- CSS has been rearranged and formatted for readability.
+- CSS has been tested and fixed for popular browsers using 2010/2011 WordPress themes.
+
+Other changes below in changelog.
 
 Some of these changes are outlined by the following items on the WP User Frontend support forum.
 
@@ -29,16 +38,23 @@ Status
 
 This code is ALPHA! Use it at you own risk!
 
-It currently has only been tested in the following configuration.
+It currently has only been tested in the following configurations.
 
-Wordpress 3.4.2
+WordPress 3.4.2
+Apache Server
+PHP 5.2 & 5.3
+WordPress 2010 Theme
+WordPress 2011 Theme
 Firefox 16.0.2
+Safari 5.0.533.16 (should work 4.1+)
+Chrome 23.0.1271.95m (should work 5.0+)
+Internet Explorer 7.0 & 8.0 
 IBM PC
 
 This code is a public development fork of WP User Frontend.
 It is not written by or supported by the author of WP User Frontend (Tareq Hasan).
-Also is not an official release of WP User Frontend.
-So please be aware this code may not be included in the next official release of WP User Frontend.
+It is not an official release of WP User Frontend.
+Please be aware this code may not be included in the next official release of WP User Frontend.
 
 Bugs
 -----
@@ -56,7 +72,7 @@ http://wordpress.org/support/plugin/wp-user-frontend
 Download
 --------
 
-http://2rrr.org.au/downloads/wp-user-frontend/wp-user-frontend_1_1_2RRR_2_1_alpha.zip
+http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_3_0_alpha.zip
 
 A Github repository is availiable
 
@@ -125,6 +141,20 @@ Then copy the files across.
 
 Changelog
 ---------
+
+= 1.1-fork-2RRR-3.0 professor99 = 
+* Optionally add Excerpts to the Add/Edit Post forms.
+* Add/Edit Post forms re-styled to suit excerpts.
+* Publish and expiration times can now be edited on the Edit Post form.
+* A Delete button can be optionally added to the Edit Post Form.
+* Attachment calls now direct (was actions).
+* Featured Image code moved to lib/featured_image.php and js/featured_image.js.
+* Redirects now filtered by wpuf_post_redirect. 
+* Form actions consolidated under wpuf_post_form.
+* Attachment/Featured Image buttons fixed for Flash/Silverlight.
+* CSS has been strengthed to avoid being messed up by themes.
+* CSS has been rearranged and formatted for readability.
+* CSS has been tested and fixed for popular browsers using 2010/2011 WordPress themes.
 
 = 1.1-fork-2RRR-2.1 professor99 = 
 * Replaced anonymous function with suppress_edit_post_link()

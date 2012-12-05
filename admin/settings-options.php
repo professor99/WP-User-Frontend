@@ -4,11 +4,19 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1-fork-2RRR-2.0
+ *@version 1.1-fork-2RRR-3.0
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Added delete button label and option
+* Changed post expiration description
+* Added excerpt options
+* Added wpuf_get_option filter
+* Removed exclamation from Update Post label
+* Changed attachment upload button display name
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Added wpuf_get_option filter
@@ -121,6 +129,15 @@ function wpuf_settings_fields() {
                 'label' => __( 'Post description help text', 'wpuf' ),
             ),
             array(
+                'name' => 'excerpt_label',
+                'label' => __( 'Excerpt tag label', 'wpuf' ),
+                'default' => 'Excerpt'
+            ),
+            array(
+                'name' => 'excerpt_help',
+                'label' => __( 'Excerpt tag help text', 'wpuf' ),
+            ),
+            array(
                 'name' => 'tag_label',
                 'label' => __( 'Post tag label', 'wpuf' ),
                 'default' => 'Tags'
@@ -133,6 +150,11 @@ function wpuf_settings_fields() {
                 'name' => 'submit_label',
                 'label' => __( 'Post submit button label', 'wpuf' ),
                 'default' => 'Submit Post'
+            ),
+            array(
+                'name' => 'delete_label',
+                'label' => __( 'Delete button label', 'wpuf' ),
+                'default' => 'Delete Post'
             ),
             array(
                 'name' => 'close_label',
@@ -281,6 +303,25 @@ function wpuf_settings_fields() {
                 )
             ),
             array(
+                'name' => 'allow_excerpt',
+                'label' => __( 'Allow excerpt', 'wpuf' ),
+                'desc' => __( 'Users will be able to add excerpt', 'wpuf' ),
+                'type' => 'checkbox',
+           ),
+            array(
+                'name' => 'require_excerpt',
+                'label' => __( 'Require excerpt', 'wpuf' ),
+                'desc' => __( 'Users will be required to add excerpt', 'wpuf' ),
+                'type' => 'checkbox',
+            ),
+            array(
+                'name' => 'excerpt_max_chars',
+                'label' => __( 'Excerpt Max Characters', 'wpuf' ),
+                'desc' => __( 'Excerpt character limit (0=unlimited)', 'wpuf' ),
+                'type' => 'text',
+                'default' => '0'
+            ),
+            array(
                 'name' => 'allow_tags',
                 'label' => __( 'Allow post tags', 'wpuf' ),
                 'desc' => __( 'Users will be able to add post tags', 'wpuf' ),
@@ -302,7 +343,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'enable_post_expiry',
                 'label' => __( 'Enable Post expiration', 'wpuf' ),
-                'desc' => __( 'Users will be able to select a duration, after that time from post publish date, post will be set to draft. This feature depends on <strong>Post Expirator</strong> plugin. ', 'wpuf' ),
+                'desc' => __( 'This will enable users to input the post expiration date. This feature depends on <strong>Post Expirator</strong> plugin. ', 'wpuf' ),
                 'type' => 'checkbox'
             ),
         ) ),
@@ -377,6 +418,17 @@ function wpuf_settings_fields() {
                 'desc' => __( 'Users will be able to delete their own posts', 'wpuf' ),
                 'type' => 'select',
                 'default' => 'yes',
+                'options' => array(
+                    'yes' => __( 'Yes', 'wpuf' ),
+                    'no' => __( 'No', 'wpuf' )
+                )
+            ),
+            array(
+                'name' => 'enable_delete_button',
+                'label' => __( 'Add delete button?', 'wpuf' ),
+                'desc' => __( 'Adds delete button to edit page', 'wpuf' ),
+                'type' => 'select',
+                'default' => 'no',
                 'options' => array(
                     'yes' => __( 'Yes', 'wpuf' ),
                     'no' => __( 'No', 'wpuf' )

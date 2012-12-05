@@ -6,12 +6,21 @@
  * @since 0.2
  * @author Tareq Hasan
  * @package WP User Frontend
+ * @version 1.1-fork-2RRR-3.0 
  */
+ 
+ /*
+== Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Redirects now filtered by wpuf_post_redirect 
+*/
+
 class WPUF_Subscription {
 
     function __construct() {
         add_filter( 'wpuf_add_post_args', array($this, 'set_pending'), 10, 1 );
-        add_filter( 'wpuf_after_post_redirect', array($this, 'post_redirect'), 10, 2 );
+        add_filter( 'wpuf_post_redirect', array($this, 'post_redirect'), 10, 4 );
 
         add_action( 'wpuf_add_post_after_insert', array($this, 'monitor_new_post'), 10, 1 );
         add_action( 'wpuf_payment_received', array($this, 'payment_received') );
@@ -142,19 +151,21 @@ class WPUF_Subscription {
     /**
      * Redirect to payment page after new post
      *
-     * @param string $str
+     * @param string $form
+     * @param string $location
+     * @param string $redirect_url
      * @param type $post_id
      * @return string
      */
-    function post_redirect( $post_url, $post_id ) {
+    function post_redirect( $form, $location, $redirect_url, $post_id ) {
 
-        if ( $this->has_post_error( $post_id ) ) {
+        if ( $form == 'add' && $location == 'insert' && $this->has_post_error( $post_id ) ) {
             $redirect = get_permalink( wpuf_get_option( 'payment_page' ) ) . '?action=wpuf_pay&type=post&post_id=' . $post_id;
 
             return $redirect;
         }
 
-        return $post_url;
+        return $redirect_url;
     }
 
     /**

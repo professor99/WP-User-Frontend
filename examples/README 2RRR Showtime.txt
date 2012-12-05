@@ -1,7 +1,7 @@
-README v1.0 For WP User Frontend Version: 1.1 fork: 2RRR 2.0 alpha Showtime Example
+README v1.0 For WP User Frontend Version: 1.1 fork: 2RRR 3.0 alpha Showtime Example
 ====================================================================================
 
-This is an example of the usage of WP User Frontend hooks for the 2RRR 2.0 fork.
+This is an example of the usage of WP User Frontend hooks for the 2RRR 3.0 fork.
 
 A custom taxonomy "Showtime-120" is used as a post category and new posts are added using the follow example link
 

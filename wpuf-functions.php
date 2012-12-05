@@ -5,11 +5,19 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.1 
+ * @version 1.1-fork-2RRR-3.0 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Removed attachment code replaced by ajax: wpuf_upload_attachment(), wpuf_check_upload()
+* Removed unused functions wpuf_edit_attachment() and wpuf_attachment_fields()
+* Moved wpuf_feat_img_html() to lib/featured_image.php
+* Bugfix: Closed ul tag in wpuf_show_meta_front()
+* Bugfix: Cleared floats in WPUF_Walker_Category_Checklist()
+* Added wpuf_error_msgs();
 
 = 1.1-fork-2RRR-2.1 professor99 =
 * Added suppress_edit_post_link()
@@ -87,10 +95,20 @@ function wpuf_show_post_status( $status ) {
  * @return string
  */
 function wpuf_error_msg( $error_msg ) {
+    return '<div class="wpuf-error">' . $error_msg . '</div>';
+}
+
+/**
+ * Format error messages
+ *
+ * @param array $error_msgs
+ * @return string
+ */
+function wpuf_error_msgs( $error_msgs ) {
     $msg_string = '';
-    foreach ($error_msg as $value) {
-        if ( !empty( $value ) ) {
-            $msg_string = $msg_string . '<div class="wpuf-error">' . $msg_string = $value . '</div>';
+    foreach ($error_msgs as $error_msg) {
+        if ( !empty( $error_msg ) ) {
+            $msg_string = $msg_string . wpuf_error_msg( $error_msg );
         }
     }
     return $msg_string;
@@ -160,36 +178,6 @@ function wpuf_mime( $mime ) {
 
 add_filter( 'upload_mimes', 'wpuf_mime' );
 
-/**
- * Upload the files to the post as attachemnt
- *
- * @param <type> $post_id
- */
-function wpuf_upload_attachment( $post_id ) {
-    if ( !isset( $_FILES['wpuf_post_attachments'] ) ) {
-        return false;
-    }
-
-    $fields = (int) wpuf_get_option( 'attachment_num' );
-
-    for ($i = 0; $i < $fields; $i++) {
-        $file_name = basename( $_FILES['wpuf_post_attachments']['name'][$i] );
-
-        if ( $file_name ) {
-            if ( $file_name ) {
-                $upload = array(
-                    'name' => $_FILES['wpuf_post_attachments']['name'][$i],
-                    'type' => $_FILES['wpuf_post_attachments']['type'][$i],
-                    'tmp_name' => $_FILES['wpuf_post_attachments']['tmp_name'][$i],
-                    'error' => $_FILES['wpuf_post_attachments']['error'][$i],
-                    'size' => $_FILES['wpuf_post_attachments']['size'][$i]
-                );
-
-                wpuf_upload_file( $upload );
-            }//file exists
-        }// end for
-    }
-}
 
 /**
  * Generic function to upload a file
@@ -226,42 +214,6 @@ function wpuf_upload_file( $upload_data ) {
 }
 
 /**
- * Checks the submitted files if has any errors
- *
- * @return array error list
- */
-function wpuf_check_upload() {
-    $errors = array();
-    $mime = get_allowed_mime_types();
-
-    $size_limit = (int) (wpuf_get_option( 'attachment_max_size' ) * 1024);
-    $fields = (int) wpuf_get_option( 'attachment_num' );
-
-    for ($i = 0; $i < $fields; $i++) {
-        $tmp_name = basename( $_FILES['wpuf_post_attachments']['tmp_name'][$i] );
-        $file_name = basename( $_FILES['wpuf_post_attachments']['name'][$i] );
-
-        //if file is uploaded
-        if ( $file_name ) {
-            $attach_type = wp_check_filetype( $file_name );
-            $attach_size = $_FILES['wpuf_post_attachments']['size'][$i];
-
-            //check file size
-            if ( $attach_size > $size_limit ) {
-                $errors[] = __( "Attachment file is too big" );
-            }
-
-            //check file type
-            if ( !in_array( $attach_type['type'], $mime ) ) {
-                $errors[] = __( "Invalid attachment file type" );
-            }
-        } // if $filename
-    }// endfor
-
-    return $errors;
-}
-
-/**
  * Get the attachments of a post
  *
  * @param int $post_id
@@ -291,55 +243,6 @@ function wpfu_get_attachments( $post_id ) {
     }
 
     return $att_list;
-}
-
-/**
- * Attachments preview on edit page
- *
- * @param int $post_id
- */
-function wpuf_edit_attachment( $post_id ) {
-    $attach = wpfu_get_attachments( $post_id );
-
-    if ( $attach ) {
-        $count = 1;
-        foreach ($attach as $a) {
-
-            echo 'Attachment ' . $count . ': <a href="' . $a['url'] . '">' . $a['title'] . '</a>';
-            echo "<form name=\"wpuf_edit_attachment\" id=\"wpuf_edit_attachment_{$post_id}\" action=\"\" method=\"POST\">";
-            echo "<input type=\"hidden\" name=\"attach_id\" value=\"{$a['id']}\" />";
-            echo "<input type=\"hidden\" name=\"action\" value=\"del\" />";
-            wp_nonce_field( 'wpuf_attach_del' );
-            echo '<input class="wpuf_attachment_delete" type="submit" name="wpuf_attachment_delete" value="delete" onclick="return confirm(\'Are you sure to delete this attachment?\');">';
-            echo "</form>";
-            echo "<br>";
-            $count++;
-        }
-    }
-}
-
-function wpuf_attachment_fields( $edit = false, $post_id = false ) {
-    if ( wpuf_get_option( 'allow_attachment' ) == 'yes' ) {
-        $fields = (int) wpuf_get_option( 'attachment_num' );
-
-        if ( $edit && $post_id ) {
-            $fields = abs( $fields - count( wpfu_get_attachments( $post_id ) ) );
-        }
-
-        for ($i = 0; $i < $fields; $i++) {
-            ?>
-
-            <li>
-                <label for="wpuf_post_attachments">
-                    Attachment <?php echo $i + 1; ?>:
-                </label>
-                <input type="file" name="wpuf_post_attachments[]">
-                <div class="clear"></div>
-            </li>
-
-            <?php
-        }
-    }
 }
 
 /**
@@ -566,7 +469,7 @@ function wpuf_show_meta_front( $content ) {
                     $extra .= sprintf( '<li><label>%s</label> : %s</li>', $field->label, make_clickable( $meta ) );
                 }
             }
-            $extra .= '<ul>';
+            $extra .= '</ul>';
 
             $content .= $extra;
         }
@@ -620,26 +523,6 @@ function wpuf_is_file_image( $file, $mime ) {
 }
 
 /**
- * Displays attachment information upon upload as featured image
- *
- * @since 0.8
- * @param int $attach_id attachment id
- * @return string
- */
-function wpuf_feat_img_html( $attach_id ) {
-    $image = wp_get_attachment_image_src( $attach_id, 'thumbnail' );
-    $post = get_post( $attach_id );
-
-    $html = sprintf( '<div class="wpuf-item" id="attachment-%d">', $attach_id );
-    $html .= sprintf( '<img src="%s" alt="%s" />', $image[0], esc_attr( $post->post_title ) );
-    $html .= sprintf( '<a class="wpuf-del-ft-image button" href="#" data-id="%d">%s</a> ', $attach_id, __( 'Remove Image', 'wpuf' ) );
-    $html .= sprintf( '<input type="hidden" name="wpuf_featured_img" value="%d" />', $attach_id );
-    $html .= '</div>';
-
-    return $html;
-}
-
-/**
  * Category checklist walker
  *
  * @since 0.8
@@ -674,7 +557,7 @@ class WPUF_Walker_Category_Checklist extends Walker {
     }
 
     function end_el( &$output, $category, $depth, $args ) {
-        $output .= "</li>\n";
+        $output .= "<div class=\"clear\"></div></li>\n";
     }
 
 }

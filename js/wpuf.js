@@ -9,6 +9,9 @@
 /*
 == Changelog ==
 
+= 1.1-fork-2RRR-3.0 professor99 =
+* Moved featured image functions to lib/featured_image.js
+
 = 1.1-fork-2RRR-2.0 professor99 =
 * Add 'required' message 
 * Added TinyMCE triggerSave to fix editor submit bug
@@ -25,15 +28,12 @@ jQuery(document).ready(function($) {
     var WPUF_Obj = {
         init: function () {
             $('#wpuf_new_post_form, #wpuf_edit_post_form').on('submit', this.checkSubmit);
-            $('.wpuf-post-form').on('click', 'a.wpuf-del-ft-image', this.removeFeatImg);
 
             //editprofile password strength
             $('#pass1').val('').keyup( this.passStrength );
             $('#pass2').val('').keyup( this.passStrength );
             $('#pass-strength-result').show();
 
-            //initialize the featured image uploader
-            this.featImgUploader();
             this.ajaxCategory();
         },
         checkSubmit: function () {
@@ -116,82 +116,6 @@ jQuery(document).ready(function($) {
                     break;
                 default:
                     $('#pass-strength-result').addClass('short').html( pwsL10n['short'] );
-            }
-        },
-        featImgUploader: function() {
-            if(typeof plupload === 'undefined') {
-                return;
-            }
-
-            if(wpuf.featEnabled !== '1') {
-                return;
-            }
-
-            var uploader = new plupload.Uploader(wpuf.plupload);
-
-            uploader.bind('Init', function(up, params) {
-                //$('#cpm-upload-filelist').html("<div>Current runtime: " + params.runtime + "</div>");
-                });
-
-            $('#wpuf-ft-upload-pickfiles').click(function(e) {
-                uploader.start();
-                e.preventDefault();
-            });
-
-            uploader.init();
-
-            uploader.bind('FilesAdded', function(up, files) {
-                $.each(files, function(i, file) {
-                    $('#wpuf-ft-upload-filelist').append(
-                        '<div id="' + file.id + '">' +
-                        file.name + ' (' + plupload.formatSize(file.size) + ') <b></b>' +
-                        '</div>');
-                });
-
-                up.refresh(); // Reposition Flash/Silverlight
-                uploader.start();
-            });
-
-            uploader.bind('UploadProgress', function(up, file) {
-                $('#' + file.id + " b").html(file.percent + "%");
-            });
-
-            uploader.bind('Error', function(up, err) {
-                $('#wpuf-ft-upload-filelist').append("<div>Error: " + err.code +
-                    ", Message: " + err.message +
-                    (err.file ? ", File: " + err.file.name : "") +
-                    "</div>"
-                    );
-
-                up.refresh(); // Reposition Flash/Silverlight
-            });
-
-            uploader.bind('FileUploaded', function(up, file, response) {
-                var resp = $.parseJSON(response.response);
-                //$('#' + file.id + " b").html("100%");
-                $('#' + file.id).remove();
-                //console.log(resp);
-                if( resp.success ) {
-                    $('#wpuf-ft-upload-filelist').append(resp.html);
-                    $('#wpuf-ft-upload-pickfiles').hide();
-                }
-            });
-        },
-        removeFeatImg: function(e) {
-            e.preventDefault();
-
-            if(confirm(wpuf.confirmMsg)) {
-                var el = $(this),
-                    data = {
-                        'attach_id' : el.data('id'),
-                        'nonce' : wpuf.nonce,
-                        'action' : 'wpuf_feat_img_del'
-                    }
-
-                $.post(wpuf.ajaxurl, data, function(){
-                    $('#wpuf-ft-upload-pickfiles').show();
-                    el.parent().remove();
-                });
             }
         },
         ajaxCategory: function () {

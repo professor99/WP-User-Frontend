@@ -9,6 +9,10 @@
 /*
 == Changelog ==
 
+= 1.1-fork-2RRR-3.0 professor99 =
+* Bugfix: Fixed Flash/Silverlight button issues
+* hideUploadBtn renamed hideShowUploadBtn and now shows button as well
+
 = 1.1-fork-2RRR-2.0 professor99 =
 * Updated delete for attachment list
 */
@@ -20,19 +24,27 @@ jQuery(document).ready(function($) {
             window.wpufFileCount = typeof window.wpufFileCount == 'undefined' ? 0 : window.wpufFileCount;
             this.maxFiles = parseInt(wpuf_attachment.number);
 
-            $('#wpuf-attachment-upload-filelist').on('click', 'a.track-delete', this.removeTrack);
-            $('#wpuf-attachment-upload-filelist ul.wpuf-attachment-list').sortable({
-                cursor: 'crosshair',
-                handle: '.handle'
-            });
-
             this.attachUploader();
-            this.hideUploadBtn();
+            this.hideShowUploadBtn();
         },
-        hideUploadBtn: function () {
-
+        hideShowUploadBtn: function (up) {
             if(WPUF_Attachment.maxFiles !== 0 && window.wpufFileCount >= WPUF_Attachment.maxFiles) {
-                $('#wpuf-attachment-upload-pickfiles').hide();
+                //Hide button
+			
+                $('#wpuf-attachment-upload-pickfiles').css('visibility','hidden');
+				
+                if(typeof up !== 'undefined') {
+                    up.disableBrowse(true); //Disable Attachment button
+                }
+            }
+            else {
+                // Show button
+				
+                $('#wpuf-attachment-upload-pickfiles').css('visibility','visible');
+				
+                if(typeof up !== 'undefined') {
+                    up.disableBrowse(false); //Enable Attachment button
+                }
             }
         },
         attachUploader: function() {
@@ -45,6 +57,13 @@ jQuery(document).ready(function($) {
             }
 
             var attachUploader = new plupload.Uploader(wpuf_attachment.plupload);
+
+            $('#wpuf-attachment-upload-filelist').on('click', 'a.track-delete', attachUploader, this.removeTrack);
+
+            $('#wpuf-attachment-upload-filelist ul.wpuf-attachment-list').sortable({
+                cursor: 'crosshair',
+                handle: '.handle'
+            });
 
             $('#wpuf-attachment-upload-pickfiles').click(function(e) {
                 attachUploader.start();
@@ -62,6 +81,7 @@ jQuery(document).ready(function($) {
                 });
 
                 up.refresh(); // Reposition Flash/Silverlight
+                    up.disableBrowse(true); //Disable Attachment button
                 attachUploader.start();
             });
 
@@ -74,21 +94,23 @@ jQuery(document).ready(function($) {
                     ", Message: " + err.message +
                     (err.file ? ", File: " + err.file.name : "") +
                     "</div>"
-                    );
+                );
 
                 up.refresh(); // Reposition Flash/Silverlight
+                WPUF_Attachment.hideShowUploadBtn(up);
             });
 
             attachUploader.bind('FileUploaded', function(up, file, response) {
                 var resp = $.parseJSON(response.response);
                 $('#' + file.id).remove();
-                //console.log(resp);
+
                 if( resp.success ) {
                     window.wpufFileCount += 1;
                     $('#wpuf-attachment-upload-filelist ul').append(resp.html);
-
-                    WPUF_Attachment.hideUploadBtn();
                 }
+				
+                up.refresh(); // Reposition Flash/Silverlight
+                WPUF_Attachment.hideShowUploadBtn(up);
             });
         },
         removeTrack: function(e) {
@@ -104,11 +126,9 @@ jQuery(document).ready(function($) {
 
                 $.post(wpuf.ajaxurl, data, function(){
                     el.parent().remove();
-
                     window.wpufFileCount -= 1;
-                    if(WPUF_Attachment.maxFiles !== 0 && window.wpufFileCount < WPUF_Attachment.maxFiles ) {
-                        $('#wpuf-attachment-upload-pickfiles').show();
-                    }
+                    e.data.refresh();  // Reposition Flash/Silverlight
+                    WPUF_Attachment.hideShowUploadBtn(e.data);
                 });
             }
         }

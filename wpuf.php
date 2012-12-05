@@ -5,12 +5,17 @@ Plugin Name: WP User Frontend
 Plugin URI: http://tareq.wedevs.com/2011/01/new-plugin-wordpress-user-frontend/
 Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
-Version: 1.1-fork-2RRR-2.0
+Version: 1.1-fork-2RRR-3.0
 Author URI: http://tareq.weDevs.com
 
 Extensively modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
 
 == Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Added delete_msg and delete_confirm_msg to wpuf object.
+* Moved featured image functions and variables to lib/featured_image.php
+* Added lib/featured_image.php to required list
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Addition of $submit_msg and $update_msg variables for Ajax submits.
@@ -45,6 +50,7 @@ require_once 'wpuf-ajax.php';
 require_once 'wpuf-subscription.php';
 require_once 'wpuf-payment.php';
 require_once 'lib/attachment.php';
+require_once 'lib/featured_image.php';
 require_once 'lib/gateway/paypal.php';
 
 //BugFix: Use of Wordpress dashboard can leave tinymce editor in "HTML" mode.
@@ -141,38 +147,22 @@ class WPUF_Main {
 
         wp_enqueue_style( 'wpuf', $path . '/css/wpuf.css' );
 
-        if ( has_shortcode( 'wpuf_addpost' ) || has_shortcode( 'wpuf_edit' ) ) {
-            wp_enqueue_script( 'plupload-handlers' );
-        }
-
         wp_enqueue_script( 'wpuf', $path . '/js/wpuf.js', array('jquery') );
 
         $submit_msg = wpuf_get_option( 'submit_label' );
         $update_msg = wpuf_get_option( 'update_label' );
         $posting_msg = wpuf_get_option( 'updating_label' );
+        $delete_msg = wpuf_get_option( 'delete_label' );
 
-        $feat_img_enabled = ( wpuf_get_option( 'enable_featured_image' ) == 'yes') ? true : false;
         wp_localize_script( 'wpuf', 'wpuf', array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'submit_msg' => $submit_msg,
             'update_msg' => $update_msg,
             'postingMsg' => $posting_msg,
+            'deleteMsg' => $delete_msg,
             'confirmMsg' => __( 'Are you sure?', 'wpuf' ),
+			'delete_confirm_msg' => __('Are you sure to delete this post?', 'wpuf' ),
             'nonce' => wp_create_nonce( 'wpuf_nonce' ),
-            'featEnabled' => $feat_img_enabled,
-            'plupload' => array(
-                'runtimes' => 'html5,silverlight,flash,html4',
-                'browse_button' => 'wpuf-ft-upload-pickfiles',
-                'container' => 'wpuf-ft-upload-container',
-                'file_data_name' => 'wpuf_featured_img',
-                'max_file_size' => wp_max_upload_size() . 'b',
-                'url' => admin_url( 'admin-ajax.php' ) . '?action=wpuf_featured_img&nonce=' . wp_create_nonce( 'wpuf_featured_img' ),
-                'flash_swf_url' => includes_url( 'js/plupload/plupload.flash.swf' ),
-                'silverlight_xap_url' => includes_url( 'js/plupload/plupload.silverlight.xap' ),
-                'filters' => array(array('title' => __( 'Allowed Files' ), 'extensions' => '*')),
-                'multipart' => true,
-                'urlstream_upload' => true,
-            )
         ) );
     }
 

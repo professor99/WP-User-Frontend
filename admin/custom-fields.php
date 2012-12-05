@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * Custom fields
+ *
+ * @author Tareq Hasan 
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-3.0
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Changed region description "After Description" to "After Tag"
+*/
+
 function wpuf_custom_fields() {
     $action = ( isset( $_GET['action'] ) ) ? $_GET['action'] : '';
 
@@ -132,7 +147,7 @@ function wpuf_custom_fields_main() {
                             <select id="region" name="region">
                                 <option value="top"><?php _e( 'Top', 'wpuf' ); ?></option>
                                 <option value="description"><?php _e( 'Before Description', 'wpuf' ); ?></option>
-                                <option value="tag"><?php _e( 'After Description', 'wpuf' ); ?></option>
+                                <option value="tag"><?php _e( 'After Tags', 'wpuf' ); ?></option>
                                 <option value="bottom"><?php _e( 'Bottom', 'wpuf' ); ?></option>
                             </select>
                             <span class="description"><?php _e( 'Where do you want to show this input field?', 'wpuf' ); ?></span>
@@ -197,7 +212,7 @@ function wpuf_custom_fields_main() {
             if ( $wpdb->num_rows > 0 ):
 
                 $type = array('text' => 'Text Box', 'textarea' => 'Text Area', 'select' => 'Dropdown');
-                $position = array('top' => 'Top', 'description' => 'Before Description', 'tag' => 'After Description', 'bottom' => 'Bottom');
+                $position = array('top' => 'Top', 'description' => 'Before Description', 'tag' => 'After Tags', 'bottom' => 'Bottom');
 
                 $count = 0;
                 foreach ($fields as $row):
@@ -339,7 +354,7 @@ function wpuf_custom_fields_edit() {
                                 <select id="region" name="region">
                                     <option value="top"<?php selected( $row->region, 'top' ); ?>><?php _e( 'Top', 'wpuf' ); ?></option>
                                     <option value="description"<?php selected( $row->region, 'description' ); ?>><?php _e( 'Before Description', 'wpuf' ); ?></option>
-                                    <option value="tag"<?php selected( $row->region, 'tag' ); ?>><?php _e( 'After Description', 'wpuf' ); ?></option>
+                                    <option value="tag"<?php selected( $row->region, 'tag' ); ?>><?php _e( 'After Tags', 'wpuf' ); ?></option>
                                     <option value="bottom"<?php selected( $row->region, 'bottom' ); ?>><?php _e( 'Bottom', 'wpuf' ); ?></option>
                                 </select>
                                 <span class="description"><?php _e( 'Where do you want to show this input field?', 'wpuf' ); ?></span>

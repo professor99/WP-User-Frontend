@@ -5,81 +5,80 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-3.0 
  * @since 0.8
  */
 
 /*
 == Changelog ==
 
+= 1.1-fork-2RRR-3.0 professor99 =
+* Attachment calls for edit/add post now direct (non-actions)
+* Scripts now loaded by add_post_fields()
+* All methods now static
+* Ajax actions now global
+* Removed unnecessary spans in attach_html()
+* Renamed nonces wpuf_attachment_update/wpuf_attachment_delete 
+* Fixed hover for attachment button
+
 = 1.1-fork-2RRR-2.0 professor99 =
 * Re-styled attachments.
 * Only add scripts for add/edit post shortcodes
 */
 
+//Use static methods so ajax works without loading WPUF_Attachment::scripts()
+add_action( 'wp_ajax_wpuf_attach_upload', 'WPUF_Attachment::upload_file' );
+add_action( 'wp_ajax_wpuf_attach_del', 'WPUF_Attachment::delete_file' );
+
 class WPUF_Attachment {
 
-    function __construct() {
-        $allow_upload = wpuf_get_option( 'allow_attachment' );
+    static function scripts() {
+        $max_file_size = intval( wpuf_get_option( 'attachment_max_size' ) ) * 1024;
+        $max_upload = intval( wpuf_get_option( 'attachment_num' ) );
+        $attachment_enabled = wpuf_get_option( 'allow_attachment' );
 
-        if ( $allow_upload == 'yes' ) {
-            add_action( 'wpuf_add_post_form_tags', array($this, 'add_post_fields'), 10, 2 );
-            add_action( 'wp_enqueue_scripts', array($this, 'scripts') );
+        wp_enqueue_script( 'jquery' );
+        wp_enqueue_script( 'plupload-handlers' );
+        wp_enqueue_script( 'jquery-ui-sortable' );
+        wp_enqueue_script( 'wpuf_attachment', plugins_url( 'js/attachment.js', dirname( __FILE__ ) ), array('jquery') );
 
-            add_action( 'wp_ajax_wpuf_attach_upload', array($this, 'upload_file') );
-            add_action( 'wp_ajax_wpuf_attach_del', array($this, 'delete_file') );
-
-            add_action( 'wpuf_add_post_after_insert', array($this, 'attach_file_to_post') );
-            add_action( 'wpuf_edit_post_after_update', array($this, 'attach_file_to_post') );
-        }
+        wp_localize_script( 'wpuf_attachment', 'wpuf_attachment', array(
+            'nonce' => wp_create_nonce( 'wpuf_attachment_delete' ),
+            'number' => $max_upload,
+            'attachment_enabled' => ($attachment_enabled == 'yes') ? true : false,
+            'plupload' => array(
+                'runtimes' => 'html5,silverlight,flash,html4',
+                'browse_button' => 'wpuf-attachment-upload-pickfiles',
+                'browse_button_hover' => 'wpuf-attachment-upload-pickfiles-hover',
+                'browse_button_active' => 'wpuf-attachment-upload-pickfiles-active',
+                'container' => 'wpuf-attachment-upload-container',
+                'file_data_name' => 'wpuf_attachment_file',
+                'max_file_size' => $max_file_size . 'b',
+                'url' => admin_url( 'admin-ajax.php' ) . '?action=wpuf_attach_upload&nonce=' . wp_create_nonce( 'wpuf_attachment_upload' ),
+                'flash_swf_url' => includes_url( 'js/plupload/plupload.flash.swf' ),
+                'silverlight_xap_url' => includes_url( 'js/plupload/plupload.silverlight.xap' ),
+                'filters' => array(array('title' => __( 'Allowed Files' ), 'extensions' => '*')),
+                'multipart' => true,
+                'urlstream_upload' => true,
+            )
+        ) );
     }
 
-    function scripts() {
-        //Only include scripts for add/edit post shortcodes
-        if ( has_shortcode( 'wpuf_addpost' ) || has_shortcode( 'wpuf_edit' ) ) {
-
-            $max_file_size = intval( wpuf_get_option( 'attachment_max_size' ) ) * 1024;
-            $max_upload = intval( wpuf_get_option( 'attachment_num' ) );
-            $attachment_enabled = wpuf_get_option( 'allow_attachment' );
-
-            wp_enqueue_script( 'jquery' );
-            wp_enqueue_script( 'plupload-handlers' );
-            wp_enqueue_script( 'jquery-ui-sortable' );
-            wp_enqueue_script( 'wpuf_attachment', plugins_url( 'js/attachment.js', dirname( __FILE__ ) ), array('jquery') );
-
-            wp_localize_script( 'wpuf_attachment', 'wpuf_attachment', array(
-                'nonce' => wp_create_nonce( 'wpuf_attachment' ),
-                'number' => $max_upload,
-                'attachment_enabled' => ($attachment_enabled == 'yes') ? true : false,
-                'plupload' => array(
-                    'runtimes' => 'html5,silverlight,flash,html4',
-                    'browse_button' => 'wpuf-attachment-upload-pickfiles',
-                    'container' => 'wpuf-attachment-upload-container',
-                    'file_data_name' => 'wpuf_attachment_file',
-                    'max_file_size' => $max_file_size . 'b',
-                    'url' => admin_url( 'admin-ajax.php' ) . '?action=wpuf_attach_upload&nonce=' . wp_create_nonce( 'wpuf_audio_track' ),
-                    'flash_swf_url' => includes_url( 'js/plupload/plupload.flash.swf' ),
-                    'silverlight_xap_url' => includes_url( 'js/plupload/plupload.silverlight.xap' ),
-                    'filters' => array(array('title' => __( 'Allowed Files' ), 'extensions' => '*')),
-                    'multipart' => true,
-                    'urlstream_upload' => true,
-                )
-            ) );
-        }
-    }
-
-    function add_post_fields( $post_type, $post_obj = null ) {
-        //var_dump($post_type, $post_obj);
+    static function add_post_fields( $post_type, $curpost = null ) {
+		//Attach javascript
+        WPUF_Attachment::scripts();
+		
         $attachments = array();
-        if ( $post_obj ) {
-            $attachments = wpfu_get_attachments( $post_obj->ID );
+
+        if ( $curpost ) {
+            $attachments = wpfu_get_attachments( $curpost->ID );
         }
         ?>
         <li>
             <label><?php echo wpuf_get_option( 'attachment_label' ) ?></label>
             <div class="clear"></div>
         </li>
-        <li>
+        <li id="wpuf-attachment-upload-li">
             <div id="wpuf-attachment-upload-container">
                 <div id="wpuf-attachment-upload-filelist">
                     <ul class="wpuf-attachment-list">
@@ -87,7 +86,7 @@ class WPUF_Attachment {
                         <?php
                         if ( $attachments ) {
                             foreach ($attachments as $attach) {
-                                echo $this->attach_html( $attach['id'] );
+                                echo WPUF_Attachment::attach_html( $attach['id'] );
                                 echo '<script>window.wpufFileCount += 1;</script>';
                             }
                         }
@@ -101,8 +100,27 @@ class WPUF_Attachment {
         <?php
     }
 
-    function upload_file() {
-        check_ajax_referer( 'wpuf_audio_track', 'nonce' );
+    static function attach_html( $attach_id ) {
+
+        $attachment = get_post( $attach_id );
+        $fileurl = wp_get_attachment_url($attach_id);
+        $filebase =  esc_attr( basename($fileurl) );
+		
+        $html = '';
+        $html .= '<li class="wpuf-attachment">';
+        $html .= '<span class="handle">Move</span>';
+		$html .= '<span class="required">*&nbsp;</span>';
+        $html .= sprintf( '<input type="text" class="attachment-title requiredField" name="wpuf_attach_title[]" value="%s" placeholder="%s" title="%s"/>', esc_attr( $attachment->post_title ), esc_attr__( 'Title', 'wpuf' ), esc_attr__( 'Title', 'wpuf' ) );
+        $html .= sprintf( '<a class="attachment-name" href="%s">%s</a>', $fileurl, $filebase );
+        $html .= sprintf( '<a href="#" class="attachment-actions track-delete button" data-attach_id="%d">%s</a>', $attach_id, __( 'Delete', 'wpuf' ) );
+        $html .= sprintf( '<input type="hidden" name="wpuf_attach_id[]" value="%d" />', $attach_id );
+        $html .= '</li>';
+
+        return $html;
+    }
+
+    static function upload_file() {
+        check_ajax_referer( 'wpuf_attachment_upload', 'nonce' );
 
         $upload = array(
             'name' => $_FILES['wpuf_attachment_file']['name'],
@@ -115,7 +133,7 @@ class WPUF_Attachment {
         $attach_id = wpuf_upload_file( $upload );
 
         if ( $attach_id ) {
-            $html = $this->attach_html( $attach_id );
+            $html = WPUF_Attachment::attach_html( $attach_id );
 
             $response = array(
                 'success' => true,
@@ -132,29 +150,8 @@ class WPUF_Attachment {
         exit;
     }
 
-    function attach_html( $attach_id ) {
-
-        $attachment = get_post( $attach_id );
-        $fileurl = wp_get_attachment_url($attach_id);
-        $filebase =  esc_attr( basename($fileurl) );
-		
-        $html = '';
-        $html .= '<li class="wpuf-attachment">';
-        $html .= '<span class="handle">Move</span>';
-		$html .= '<span class="required">*&nbsp;</span>';
-        $html .= '<span class="attachment-title">';
-        $html .= sprintf( '<input type="text" class="requiredField" name="wpuf_attach_title[]" value="%s" placeholder="%s" title="%s"/>', esc_attr( $attachment->post_title ), esc_attr__( 'Title', 'wpuf' ), esc_attr__( 'Title', 'wpuf' ) );
-        $html .= '</span>';
-        $html .= sprintf( '<a class="attachment-name" href="%s">%s</span>', $fileurl, $filebase );
-        $html .= sprintf( '<span class="attachment-actions"><a href="#" class="track-delete button" data-attach_id="%d">%s</a></span>', $attach_id, __( 'Delete', 'wpuf' ) );
-        $html .= sprintf( '<input type="hidden" name="wpuf_attach_id[]" value="%d" />', $attach_id );
-        $html .= '</li>';
-
-        return $html;
-    }
-
-    function delete_file() {
-        check_ajax_referer( 'wpuf_attachment', 'nonce' );
+    static function delete_file() {
+        check_ajax_referer( 'wpuf_attachment_delete', 'nonce' );
 
         $attach_id = isset( $_POST['attach_id'] ) ? intval( $_POST['attach_id'] ) : 0;
         $attachment = get_post( $attach_id );
@@ -168,14 +165,12 @@ class WPUF_Attachment {
         exit;
     }
 
-    function attach_file_to_post( $post_id ) {
-        $posted = $_POST;
-
-        if ( isset( $posted['wpuf_attach_id'] ) ) {
-            foreach ($posted['wpuf_attach_id'] as $index => $attach_id) {
+    static function attach_file_to_post( $post_id ) {
+        if ( isset( $_POST['wpuf_attach_id'] ) ) {
+            foreach ($_POST['wpuf_attach_id'] as $index => $attach_id) {
                 $postarr = array(
                     'ID' => $attach_id,
-                    'post_title' => $posted['wpuf_attach_title'][$index],
+                    'post_title' => $_POST['wpuf_attach_title'][$index],
                     'post_parent' => $post_id,
                     'menu_order' => $index
                 );
@@ -186,5 +181,3 @@ class WPUF_Attachment {
     }
 
 }
-
-$wpuf_audio = new WPUF_Attachment();

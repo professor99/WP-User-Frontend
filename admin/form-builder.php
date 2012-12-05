@@ -1,4 +1,20 @@
 <?php
+
+/**
+ * Form Builder
+ *
+ * @author Tareq Hasan 
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-3.0
+ */
+ 
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-3.0 professor99 =
+* Added textarea container
+*/
+
 /*
  * Array param definitions are as follows:
  * name    = field name
@@ -84,12 +100,15 @@ function wpuf_build_custom_field_form( $position = 'top', $edit = false, $post_i
                                     <span class="required">*</span>
                                 <?php endif; ?>
                             </label>
-                            <?php $class = ( $field->required == 'yes' ) ? 'requiredField' : ''; ?>
-                            <textarea class="<?php echo $class; ?>" name="<?php echo $field->field; ?>" id="<?php echo $field->field; ?>"><?php echo stripslashes( $value ); ?></textarea>
+                                <div class="clear"></div>
+                                <div class="wpuf-textarea-container">
+                                    <?php $class = ( $field->required == 'yes' ) ? 'requiredField' : ''; ?>
+                                    <textarea class="<?php echo $class; ?>" name="<?php echo $field->field; ?>" id="<?php echo $field->field; ?>"><?php echo stripslashes( $value ); ?></textarea>
+                                </div>
                             <div class="clear"></div>
 
                             <?php if ( $field->desc ): ?>
-                                <p class="description"><?php echo stripslashes( $field->desc ); ?></p>
+                                <p class="description-left"><?php echo stripslashes( $field->desc ); ?></p>
                                 <div class="clear"></div>
                             <?php endif; ?>
 
