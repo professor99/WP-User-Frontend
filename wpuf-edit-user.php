@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-4.0 
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Bugfix: Changed wpuf_user_edit_profile_form() to show_form()
 
 = 1.1-fork-2RRR-2.0 professor99 =
 * Added wpuf prefix to some class names
@@ -18,6 +21,7 @@
 require_once(ABSPATH . '/wp-admin/includes/user.php');
 
 function wpuf_edit_users() {
+    global $edit_profile;
 
     ob_start();
     //if user is logged in
@@ -34,7 +38,7 @@ function wpuf_edit_users() {
                 case 'edit':
                     //if user exists
                     if ( $user_id && $userdata ) {
-                        wpuf_user_edit_profile_form( $user_id );
+                        $edit_profile->show_form( $user_id );
                     } else {
                         printf( __( "User doesn't exists", 'wpuf' ) );
                     }

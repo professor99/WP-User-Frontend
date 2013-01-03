@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0 
+ * @version 1.1-fork-2RRR-4.0 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Implemented "enable_post_edit" default option.
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Removed attachment code replaced by ajax: wpuf_upload_attachment(), wpuf_check_upload()
@@ -427,7 +430,7 @@ function wpuf_edit_post_link( $url, $post_id ) {
     $override = wpuf_get_option( 'override_editlink', 'yes' );
     if ( $override == 'yes' ) {
         $url = '';
-        if ( wpuf_get_option( 'enable_post_edit' ) == 'yes' ) {
+        if ( wpuf_get_option( 'enable_post_edit' ) != 'no' ) {
             $edit_page = (int) wpuf_get_option( 'edit_page_id' );
             $url = get_permalink( $edit_page );
 

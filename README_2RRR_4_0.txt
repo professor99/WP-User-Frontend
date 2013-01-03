@@ -1,4 +1,4 @@
-README WP User Frontend Version: 1.1-fork-2RRR-3.0 alpha
+README WP User Frontend Version: 1.1-fork-2RRR-4.0 alpha
 ========================================================
 
 Modified Code: Andy Bruin (professor99)
@@ -12,16 +12,22 @@ It is a major update of WP User Frontend concentrating on useability and custome
 It focuses on Add Post and Edit Post functionality.
 There are some bug fixes included as well.
 
-The main differences from 1.1-fork-2RRR-2.1 follow:
+This update sets WP User Frontend default edit/add/delete post permissions to WordPress defaults.
+Old installations retain previous settings.
+ 
+The main differences from 1.1-fork-2RRR-3.0 follow:
 
-- Optionally add Excerpts to the Add/Edit Post forms.
-- Add/Edit Post forms re-styled to suit excerpts.
-- Publish and expiration times can now be edited on the Edit Post form.
-- A Delete button can be optionally added to the Edit Post Form.
-- Attachment/Featured Image buttons fixed for Flash/Silverlight.
-- CSS has been strengthed for use in other themes.
-- CSS has been rearranged and formatted for readability.
-- CSS has been tested and fixed for popular browsers using 2010/2011 WordPress themes.
+* Added "Users can post?" option.
+* Added "default" parameter for "Users can edit post?" option.
+* Added "default" parameter for "Users can delete post?" option.
+* Added "default" parameter for "Post Status" option.
+* Added version to support option page.
+* Added Downgrade menu
+* Better language support for info div
+* Enhanced security
+* Added $post_type parameter to wpuf_can_post filter.
+* Added $post_id parameter to wpuf_can_edit filter.
+* Added wpuf_can_delete filter
 
 Other changes below in changelog.
 
@@ -72,9 +78,9 @@ http://wordpress.org/support/plugin/wp-user-frontend
 Download
 --------
 
-http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_3_0_alpha.zip
+http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_4_0_alpha.zip
 
-A Github repository is availiable
+A Github repository is available
 
 https://github.com/professor99/WP-User-Frontend/tree/2RRR
 
@@ -139,8 +145,32 @@ Changed code is in /wp-user-frontend in the same directory structure as the orig
 Before using make a copy of your original files for safe keeping just in case something breaks.
 Then copy the files across.
 
+Downgrade
+---------
+
+To downgrade back to Version 1.1 go the the WP User Frontend admin tab "Downgrade" and click on the 
+"Downgrade to version 1.1" button. This will set options back to version 1.1 equivalents. 
+Restore 1.1 files directly after this.
+
 Changelog
 ---------
+
+= 1.1-fork-2RRR-4.0 professor99 = 
+* Added "Users can post?" option.
+* Added "default" parameter for "Users can edit post?" option.
+* Added "default" parameter for "Users can delete post?" option.
+* Added "default" parameter for "Post Status" option.
+* Added version to support option page.
+* Added Downgrade menu
+* Better language support for info div
+* Enhanced security
+* Added $post_type parameter to wpuf_can_post filter.
+* Added $post_id parameter to wpuf_can_edit filter.
+* Added wpuf_can_delete filter
+* Updated user mapping
+* Fixed Description alignment for all users
+* Redirect to dashboard on login
+* Bugfix: Changed wpuf_user_edit_profile_form() to show_form()
 
 = 1.1-fork-2RRR-3.0 professor99 = 
 * Optionally add Excerpts to the Add/Edit Post forms.
@@ -152,7 +182,7 @@ Changelog
 * Redirects now filtered by wpuf_post_redirect. 
 * Form actions consolidated under wpuf_post_form.
 * Attachment/Featured Image buttons fixed for Flash/Silverlight.
-* CSS has been strengthed to avoid being messed up by themes.
+* CSS has been strengthened to avoid being messed up by themes.
 * CSS has been rearranged and formatted for readability.
 * CSS has been tested and fixed for popular browsers using 2010/2011 WordPress themes.
 

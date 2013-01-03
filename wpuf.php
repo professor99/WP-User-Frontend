@@ -5,12 +5,19 @@ Plugin Name: WP User Frontend
 Plugin URI: http://tareq.wedevs.com/2011/01/new-plugin-wordpress-user-frontend/
 Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
-Version: 1.1-fork-2RRR-3.0
+Version: 1.1-fork-2RRR-4.0
 Author URI: http://tareq.weDevs.com
+Contributors: tareq1988,professor99
 
-Extensively modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
+Modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
 
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Added WPUF_Main::version plugin version variable
+* Added get_plugin_data() and get_plugin_version() functions
+* Require downgrade.php
+* Moved $wpuf creation to file start
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Added delete_msg and delete_confirm_msg to wpuf object.
@@ -23,6 +30,9 @@ Extensively modified by Andy Bruin (professor99) of KnockThemDeadProductions for
 = 1.1-fork-2RRR-1.0 professor99 =
 * Set TinyMCE to start in Visual mode.
 */
+
+//Invoked here so other require files can use $wpuf functions
+$wpuf = new WPUF_Main();
 
 if ( !class_exists( 'WeDevs_Settings_API' ) ) {
     require_once dirname( __FILE__ ) . '/lib/class.settings-api.php';
@@ -38,6 +48,7 @@ if ( is_admin() ) {
     require_once 'admin/taxonomy.php';
     require_once 'admin/subscription.php';
     require_once 'admin/transaction.php';
+    require_once 'admin/downgrade.php';    
 }
 
 require_once 'wpuf-dashboard.php';
@@ -58,8 +69,12 @@ require_once 'lib/gateway/paypal.php';
 add_filter( 'wp_default_editor', create_function('', 'return "tinymce";') );
 
 class WPUF_Main {
+    var $version = '';
 
     function __construct() {
+        //Get plugin version
+        $this->version = $this->get_plugin_version();
+
         register_activation_hook( __FILE__, array($this, 'install') );
         register_deactivation_hook( __FILE__, array($this, 'uninstall') );
 
@@ -126,9 +141,39 @@ class WPUF_Main {
     }
 
     function uninstall() {
-
     }
 
+    /**
+     * Get plugin header data
+     *
+     * @return array
+     * @since 1.1-fork-2RRR-4.0
+     */
+    function get_plugin_data() {
+        $default_headers = array(
+            'Name' => 'Plugin Name',
+            'PluginURI' => 'Plugin URI',
+            'Version' => 'Version',
+            'Description' => 'Description',
+            'Author' => 'Author',
+            'AuthorURI' => 'Author URI',
+			'Contributors' => 'Contributors'
+        );
+
+        return get_file_data( __FILE__, $default_headers, 'plugin' );
+    }
+
+    /**
+     * Get plugin version
+     *
+     * @return string
+     * @since 1.1-fork-2RRR-4.0
+     */
+    function get_plugin_version() {
+        $plugin_data = $this->get_plugin_data();
+        return $plugin_data['Version'];
+    }
+	
     /**
      * Enqueues Styles and Scripts when the shortcodes are used only
      *
@@ -213,4 +258,4 @@ class WPUF_Main {
 
 }
 
-$wpuf = new WPUF_Main();
+

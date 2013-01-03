@@ -5,11 +5,19 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0 
+ * @version 1.1-fork-2RRR-4.0 
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Implemented "enable_post_add" option.
+* Better language support for info div
+* Implemented "default" parameter for "Post Status" option.
+* Updated user mapping
+* Added $post_type parameter to wpuf_can_post filter.
+* Fixed Description alignment for all users
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Added excerpt
@@ -148,11 +156,19 @@ class WPUF_Add_Post {
 		$this->wpuf_self = "http://" . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
 
 		$this->logged_in = is_user_logged_in();
-
+        
+        $post_type_object = get_post_type_object( $post_type );
+        
 		$can_post = 'yes';
 		$info = ''; 
-				
-		if (!$this->logged_in) {
+
+		$enable_post_add = wpuf_get_option( 'enable_post_add', 'default' );
+
+		if ( $enable_post_add == 'no' ) {
+			$can_post = 'no';
+			$info = 'Add Post is disabled';
+		} 
+		else if ( !$this->logged_in ) {
 			//Get login page url			
 			if ($close == 'false') {
 				$login_url = 'http://' . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);			
@@ -163,20 +179,26 @@ class WPUF_Add_Post {
 			}
 
 			$can_post = 'no';			
-			$info = sprintf(__( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout($login_url, false ) );
+			$info = 'restricted';
 		}
-		else if (!current_user_can( 'edit_posts' )) {
-			$can_post = 'no';
-			$info = __( "You are not permitted to add posts.", 'wpuf' );
+		else if ( $enable_post_add == 'default' && !current_user_can( $post_type_object->cap->edit_posts ) ) {
+            $can_post = 'no';
+			$info = 'You are not permitted to add posts of this type.';
 		}
 		
 		//If you use this filter to allow non logged in users make sure use a Catcha or similar.
-		$can_post = apply_filters( 'wpuf_can_post', $can_post );
+		$can_post = apply_filters( 'wpuf_can_post', $can_post, $post_type );
 
 		$info = apply_filters( 'wpuf_addpost_notice', $info );
 
-		if ($info) 
+		if ($info) {
+			if ( $info == 'restricted' )
+				$info = sprintf(__( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout($login_url, false ) );
+			else
+				$info = __( $info, 'wpuf' );
+				
 			echo '<div class="wpuf-info">' . $info . '</div>';
+		}	
 				
 		if ( $can_post == 'yes' ) {
 			$this->post_form( $post_type, $close, $redirect );
@@ -247,7 +269,7 @@ class WPUF_Add_Post {
 						<label for="new-post-desc">
 							<?php echo wpuf_get_option( 'desc_label' ); ?> <span class="required">*</span>
 						</label>
-
+						<div class="clear"></div>
 						<?php
 						$editor = wpuf_get_option( 'editor_type' );
 
@@ -260,7 +282,6 @@ class WPUF_Add_Post {
 							wp_editor( $description, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => true, 'textarea_rows' => 8) ); 
 						} else if ( $editor == 'plain' ) { 
 						?>
-						<div class="clear"></div>
 							<textarea name="wpuf_post_content" class="requiredField wpuf-editor-plain" id="new-post-desc" cols="60" rows="8"><?php echo esc_textarea( $description ); ?></textarea>
 						<?php } else { 
 							//Use custom editor. 
@@ -534,22 +555,23 @@ class WPUF_Add_Post {
 		//$message = '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>'; 
  		//echo '<root><success>false></success><message>' . <htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>'; 
 
-
 		$title = trim( $_POST['wpuf_post_title'] );
 		$content = trim( $_POST['wpuf_post_content'] );
 		$excerpt = trim( strip_tags(  $_POST['wpuf_excerpt'] ) );
 		$post_type = trim( strip_tags( $_POST['wpuf_post_type'] ) );
 
+		$this->logged_in = is_user_logged_in();
+
 		//Set header content type to XML
 		header( 'Content-Type: text/xml' );
-		
+
 		if ( !wp_verify_nonce( $_REQUEST['_wpnonce'], 'wpuf-add-post' ) ) {
 			$message = wpuf_error_msg( __( 'Cheating?' ) );
 			//XML message
 			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
 			exit;
 		}
-		
+
 		$errors = array();
 
 		//validate title
@@ -582,7 +604,7 @@ class WPUF_Add_Post {
 		}
 
 		//process the custom fields
-		
+
 		$custom_fields = array();
 
 		$fields = wpuf_get_custom_fields();
@@ -606,7 +628,7 @@ class WPUF_Add_Post {
 		//validate post date
 
 		$post_date = '';
-		
+
 		$post_date_enable = wpuf_get_option( 'enable_post_date' );
 
 		if ( $post_date_enable == 'on' ) {
@@ -652,7 +674,7 @@ class WPUF_Add_Post {
 					$errors[] = __( 'Invalid expiry time', 'wpuf' );
 			}
 		}
-		
+
 		$errors = apply_filters( 'wpuf_add_post_validation', $errors );
 
 		//if not any errors, proceed
@@ -682,17 +704,30 @@ class WPUF_Add_Post {
 			$post_category = array(wpuf_get_option( 'default_cat' ));
 		}
 
-		//Set post status
-		$post_stat = wpuf_get_option( 'post_status' );
-		
 		//Set author according to 'post author' option.
-		//If user not logged in map user to 'map_author' option
-		if (!$this->logged_in  && wpuf_get_option( 'post_author' ) == 'original') {
+		//If user logged in and 'post_author' option is set to 'original' then set post author to user.
+		//Else set post author to 'map_author' option value.
+		if ($this->logged_in  && wpuf_get_option( 'post_author' ) == 'original') {
 			$post_author = $userdata->ID;
 		} else {
 			$post_author = wpuf_get_option( 'map_author' );
 		}
+
+		//Set post status
 		
+		$post_stat = wpuf_get_option( 'post_status' );
+
+        $post_type_object = get_post_type_object( $post_type );
+
+		if ( $post_stat == 'default' ) {
+			if( user_can( $post_author, $post_type_object->cap->publish_posts ) ) { 
+				$post_stat = 'publish';
+			}
+			else {
+				$post_stat = 'pending';
+			}
+		}
+
 		$my_post = array(
 			'post_title' => $title,
 			'post_content' => $content,

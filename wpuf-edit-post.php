@@ -5,11 +5,20 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0
+ * @version 1.1-fork-2RRR-4.0
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Implemented "enable_post_edit" default option.
+* Implemented "enable_post_del" default option.
+* Better language support for info div
+* Enhanced security
+* Added $post_id parameter to wpuf_can_edit filter.
+* Added wpuf_can_delete filter
+* Fixed Description alignment for all users
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Added excerpt
@@ -116,61 +125,48 @@ class WPUF_Edit_Post {
 		wp_enqueue_script( 'wpuf_edit_post', plugins_url( 'js/wpuf-edit-post.js',  __FILE__ ) );
 	}	
 
-    /**
-     * Delete a post
-     *
-     * Only post author and editors has the capability to delete a post
-     */
-    function delete_post() {
-        global $userdata;
-
+	/**
+	* Delete a post
+	*/
+	function delete_post() {
 		//Set header content type to XML
 		header( 'Content-Type: text/xml' );
+
+		$post_id = trim( $_POST['post_id'] );
 		
-		if ( !wp_verify_nonce( $_POST['nonce'], 'wpuf_nonce' ) ) {
+		if ( !wp_verify_nonce( $_POST['nonce'], 'wpuf-delete-post' . $post_id  ) ) {
 			$message = wpuf_error_msg( __( 'Cheating?' ) );
 			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
 			exit;
 		}
 
-		$post_id = $_POST['post_id'];
+		//Delete post
+		wp_delete_post( $post_id );
 		
-        //Delete post if the requested user is the post author or has global delete permissions
-
-        $post = get_post( $post_id );
-
-		if ( ($post->post_author == $userdata->ID) || current_user_can( 'delete_others_pages' ) ) {
-			//Delete post
-			wp_delete_post( $post_id );
-			
-			//Set after delete redirect
-			switch ($_POST['wpuf_redirect']) {
-				case "auto":
-					if ($_POST['wpuf_close'] == true) {
-						$redirect_url = $_POST['wpuf_referer'];
-					} else {
-						$redirect_url = $_POST['wpuf_self'];
-					}
-					break;
-				case "current":
-					$redirect_url = $_POST['wpuf_self'];
-					break;
-				case "last":
+		//Set after delete redirect
+		switch ($_POST['wpuf_redirect']) {
+			case "auto":
+				if ($_POST['wpuf_close'] == true) {
 					$redirect_url = $_POST['wpuf_referer'];
-					break;
-				default:
-					$redirect_url = "";
-			}
-			
-			//Use this filter if you want to change the return address on delete
-			$redirect_url = apply_filters( 'wpuf_post_redirect', 'edit', 'delete', $redirect_url, $post_id );
-
-			$message = wpuf_error_msg( __('Post deleted', 'wpuf') );
-			echo '<root><success>true</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
-		} else {
-			$message =  wpuf_error_msg( __( 'You are not the post author. Cheeting huh!', 'wpuf' ) );
-			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
+				} else {
+					$redirect_url = $_POST['wpuf_self'];
+				}
+				break;
+			case "current":
+				$redirect_url = $_POST['wpuf_self'];
+				break;
+			case "last":
+				$redirect_url = $_POST['wpuf_referer'];
+				break;
+			default:
+				$redirect_url = "";
 		}
+		
+		//Use this filter if you want to change the return address on delete
+		$redirect_url = apply_filters( 'wpuf_post_redirect', 'edit', 'delete', $redirect_url, $post_id );
+
+		$message = wpuf_error_msg( __('Post deleted', 'wpuf') );
+		echo '<root><success>true</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
 		
 		exit;
 	}
@@ -219,15 +215,17 @@ class WPUF_Edit_Post {
 
 		$can_edit = 'yes';
 		$info = ''; 
-						
+
+		$enable_post_edit = wpuf_get_option( 'enable_post_edit', 'default' );
+		
 		if ( !$curpost ) {
 			$invalid = true;
 			$can_edit = 'no';
-			$info = __( 'Invalid post', 'wpuf' );
+			$info = 'Invalid post';
 		}
-		else if ( wpuf_get_option( 'enable_post_edit', 'yes' ) != 'yes' ) {
+		else if ( $enable_post_edit == 'no' ) {
 			$can_edit = 'no';
-			$info = __( 'Post Editing is disabled', 'wpuf' );
+			$info = 'Post Editing is disabled';
 		} 
 		else if (!$this->logged_in) {
 			//Get login page url			
@@ -240,31 +238,54 @@ class WPUF_Edit_Post {
 			}
 
 			$can_edit = 'no';						
-			$info = sprintf(__( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout($login_url, false ) );
+			$info = 'restricted';
 		} 
-		else if (!current_user_can( 'edit_others_posts' ) && current_user_can( 'edit_posts' ) && $userdata->ID != $curpost->post_author ) {
-			$can_edit = 'no';
-			$info = __( "You are not allowed to edit this post", 'wpuf' );
+		else if ( !current_user_can( 'edit_post', $post_id ) ) {
+			if ( $enable_post_edit != 'yes' || $userdata->ID != $curpost->post_author ) {
+				$can_edit = 'no';
+				$info = 'You are not allowed to edit this post';
+			}
 		}
 
 		if (!$invalid) {
-			//If you use this filter to allow non logged in users make sure use a Catcha or similar.
-			$can_edit = apply_filters( 'wpuf_can_edit', $can_edit );
-
+			$can_edit = apply_filters( 'wpuf_can_edit', $can_edit, $post_id );
 			$info = apply_filters( 'wpuf_editpost_notice', $info );
 		}
 
-		if ($info) 
+		if ($info) {
+			if ( $info == 'restricted' )
+				$info = sprintf(__( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout($login_url, false ) );
+			else
+				$info = __( $info, 'wpuf' );
+				
 			echo '<div class="wpuf-info">' . $info . '</div>';
+		}	
 
 		if ( $can_edit == 'yes' ) {
 			//show post form
 			$this->edit_form( $curpost, $close, $redirect );
 			
-			if (  wpuf_get_option( 'enable_delete_button' ) == 'yes' && wpuf_get_option( 'enable_post_del' ) == 'yes' ) { 
-				$onclick = "wpuf_delete_post( $post_id, \"$redirect\", \"$close\", \"$this->wpuf_referer\", \"$this->wpuf_self\" );return false;";
-				$delete_label = esc_attr( wpuf_get_option( 'delete_label' ) );
-				echo '<div id="wpuf-button-delete"><button class="wpuf-button" type="button" onclick=\'' . $onclick . '\'>' . $delete_label . '</button></div>';
+			if ( wpuf_get_option( 'enable_delete_button' ) == 'yes' ) {
+				$can_delete = false;
+				
+				$enable_post_del = wpuf_get_option( 'enable_post_del', 'default' );
+				
+				if ( $enable_post_del != 'no' && $this->logged_in ) {
+					if ( current_user_can( 'delete_post', $post_id ) ) {
+						$can_delete = true;
+					} else if ( $enable_post_del == 'yes' && $userdata->ID == $curpost->post_author ) {
+						$can_delete = true;
+					}	
+				}
+				
+				$can_delete = apply_filters( 'wpuf_can_delete', $can_delete, $post_id );
+		
+				if ( $can_delete ) {
+					$nonce = wp_create_nonce( 'wpuf-delete-post' . $post_id );
+					$onclick = "wpuf_delete_post( $post_id, \"$redirect\", \"$close\", \"$this->wpuf_referer\", \"$this->wpuf_self\", \"$nonce\" );return false;";
+					$delete_label = esc_attr( wpuf_get_option( 'delete_label' ) );
+					echo '<div id="wpuf-button-delete"><button class="wpuf-button" type="button" onclick=\'' . $onclick . '\'>' . $delete_label . '</button></div>';
+				}	
 			} 
 		}
 
@@ -305,7 +326,7 @@ class WPUF_Edit_Post {
 ?>
 		<div id="wpuf-post-area">
 			<form name="wpuf_edit_post_form" id="wpuf_edit_post_form" action="" enctype="multipart/form-data" method="POST">
-				<?php wp_nonce_field( 'wpuf-edit-post' ) ?>
+				<?php wp_nonce_field( 'wpuf-edit-post' . $curpost->ID ) ?>
 				<ul class="wpuf-post-form">
 
 					<?php 
@@ -340,7 +361,7 @@ class WPUF_Edit_Post {
 						<label for="new-post-desc">
 							<?php echo wpuf_get_option( 'desc_label' ); ?> <span class="required">*</span>
 						</label>
-
+						<div class="clear"></div>
 						<?php
 						$editor = wpuf_get_option( 'editor_type' );
 
@@ -353,7 +374,6 @@ class WPUF_Edit_Post {
 							wp_editor( $curpost->post_content, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => true, 'textarea_rows' => 8) );
 						} else if ( $editor == 'plain' ) { 
 						?>
-						<div class="clear"></div>
 						<textarea name="wpuf_post_content" class="requiredField wpuf-editor-plain" id="new-post-desc" cols="60" rows="8"><?php echo esc_textarea( $curpost->post_content ); ?></textarea>
 						<?php } else {
 							//Use custom editor. 
@@ -655,6 +675,7 @@ class WPUF_Edit_Post {
 		//$message = '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>' ;
  		//echo '<root><success>false></success><message>' . <htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>'; 
 
+		$post_id = trim( $_POST['post_id'] );
 		$title = trim( $_POST['wpuf_post_title'] );
 		$content = trim( $_POST['wpuf_post_content'] );
 		$excerpt = trim( strip_tags(  $_POST['wpuf_excerpt'] ) );
@@ -662,7 +683,7 @@ class WPUF_Edit_Post {
 		//Set header content type to XML
 		header( 'Content-Type: text/xml' );
 
-		if ( !wp_verify_nonce( $_REQUEST['_wpnonce'], 'wpuf-edit-post' ) ) {
+		if ( !wp_verify_nonce( $_REQUEST['_wpnonce'], 'wpuf-edit-post' . $post_id) ) {
 			$message = wpuf_error_msg( __( 'Cheating?' ) );
 			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
 			exit;
@@ -799,7 +820,7 @@ class WPUF_Edit_Post {
 		}
 
 		$post_update = array(
-			'ID' => trim( $_POST['post_id'] ),
+			'ID' => $post_id,
 			'post_title' => $title,
 			'post_content' => $content,
 			'post_excerpt' => $excerpt,

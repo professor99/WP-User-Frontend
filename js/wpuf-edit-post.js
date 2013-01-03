@@ -3,12 +3,15 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0
+ * @version 1.1-fork-2RRR-4.0
  * @since 1.1-fork-2RRR-3.0  
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Added nonce parameter to wpuf_delete_post()
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Was wpuf_edit_post_javascript() in wpuf_edit_post.php
@@ -81,7 +84,7 @@ function wpuf_edit_post_error(XMLHttpRequest, textStatus, errorThrown) {
 //delete button
 //-------------
 
-function wpuf_delete_post (postID, redirect, close, referer, self) {
+function wpuf_delete_post (postID, redirect, close, referer, self, nonce) {
 	if( confirm(wpuf.delete_confirm_msg) ) {
 
 		$.ajax({
@@ -98,7 +101,7 @@ function wpuf_delete_post (postID, redirect, close, referer, self) {
 				wpuf_close: close,
 				wpuf_referer: referer,
 				wpuf_self: self,
-				nonce: wpuf.nonce
+				nonce: nonce
 			}
 		});
 	}

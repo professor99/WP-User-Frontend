@@ -4,11 +4,18 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1-fork-2RRR-3.0
+ *@version 1.1-fork-2RRR-4.0
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Added "Users can post?" option.
+* Added "default" parameter for "Users can edit post?" option.
+* Added "default" parameter for "Users can delete post?" option.
+* Added "default" parameter for "Post Status" option.
+* Added version to support option page.
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Added delete button label and option
@@ -99,6 +106,8 @@ function wpuf_settings_sections() {
 }
 
 function wpuf_settings_fields() {
+    global $wpuf;
+
     $settings_fields = array(
         'wpuf_labels' => apply_filters( 'wpuf_options_label', array(
             array(
@@ -197,10 +206,11 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'post_status',
                 'label' => __( 'Post Status', 'wpuf' ),
-                'desc' => __( 'Default post status after user submits a post', 'wpuf' ),
+                'desc' => __( 'Post status after user submits a post (Default = WordPress default)', 'wpuf' ),
                 'type' => 'select',
-                'default' => 'publish',
+                'default' => 'default',
                 'options' => array(
+                    'default' => 'Default',		
                     'publish' => 'Publish',
                     'draft' => 'Draft',
                     'pending' => 'Pending'
@@ -234,7 +244,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'exclude_cats',
                 'label' => __( 'Exclude category ID\'s', 'wpuf' ),
-                'desc' => __( 'Exclude categories fro the dropdown', 'wpuf' ),
+                'desc' => __( 'Exclude categories from the dropdown', 'wpuf' ),
                 'type' => 'text'
             ),
             array(
@@ -402,23 +412,37 @@ function wpuf_settings_fields() {
                 )
             ),
             array(
-                'name' => 'enable_post_edit',
-                'label' => __( 'Users can edit post?', 'wpuf' ),
-                'desc' => __( 'Users will be able to edit their own posts', 'wpuf' ),
+                'name' => 'enable_post_add',
+                'label' => __( 'Users can post?', 'wpuf' ),
+                'desc' => __( 'Default = WordPress default', 'wpuf' ),
                 'type' => 'select',
-                'default' => 'yes',
+                'default' => 'default',
                 'options' => array(
+                    'default' => __( 'Default', 'wpuf' ),
+                    'yes' => __( 'Yes', 'wpuf' ),
+                    'no' => __( 'No', 'wpuf' )
+                )
+            ),
+            array(
+                'name' => 'enable_post_edit',
+                'label' => __( 'Users can edit their posts?', 'wpuf' ),
+                'desc' => __( 'Default = WordPress default', 'wpuf' ),
+                'type' => 'select',
+                'default' => 'default',
+                'options' => array(
+                    'default' => __( 'Default', 'wpuf' ),
                     'yes' => __( 'Yes', 'wpuf' ),
                     'no' => __( 'No', 'wpuf' )
                 )
             ),
             array(
                 'name' => 'enable_post_del',
-                'label' => __( 'User can delete post?', 'wpuf' ),
-                'desc' => __( 'Users will be able to delete their own posts', 'wpuf' ),
+                'label' => __( 'User can delete their posts?', 'wpuf' ),
+                'desc' => __( 'Default = WordPress default', 'wpuf' ),
                 'type' => 'select',
-                'default' => 'yes',
+                'default' => 'default',
                 'options' => array(
+                    'default' => __( 'Default', 'wpuf' ),
                     'yes' => __( 'Yes', 'wpuf' ),
                     'no' => __( 'No', 'wpuf' )
                 )
@@ -585,6 +609,12 @@ function wpuf_settings_fields() {
             ),
         ) ),
         'wpuf_support' => apply_filters( 'wpuf_options_support', array(
+            array(
+                'name' => 'version',
+                'label' => __( 'Version', 'wpuf' ),
+                'type' => 'html',
+                'desc' => $wpuf->version
+            ),		
             array(
                 'name' => 'support',
                 'label' => __( 'Need Help?', 'wpuf' ),

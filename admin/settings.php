@@ -4,7 +4,17 @@
  * WordPress settings API demo class
  *
  * @author Tareq Hasan
+ * @package WP User Frontend
+ * @version 1.1-fork-2RRR-4.0 
  */
+
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 =
+* Added Downgrade menu
+*/
+
 class WPUF_Settings {
 
     private $settings_api;
@@ -37,6 +47,7 @@ class WPUF_Settings {
         //add_submenu_page( 'wpuf-admin-opt', 'Custom Taxonomies', 'Custom Taxonomies', 'activate_plugins', 'wpuf_custom_tax', 'wpuf_taxonomy_fields' );
         add_submenu_page( 'wpuf-admin-opt', __( 'Subscription', 'wpuf' ), __( 'Subscription', 'wpuf' ), 'activate_plugins', 'wpuf_subscription', 'wpuf_subscription_admin' );
         add_submenu_page( 'wpuf-admin-opt', __( 'Transaction', 'wpuf' ), __( 'Transaction', 'wpuf' ), 'activate_plugins', 'wpuf_transaction', 'wpuf_transaction' );
+        add_submenu_page( 'wpuf-admin-opt', __( 'Downgrade', 'wpuf' ), __( 'Downgrade', 'wpuf' ), 'activate_plugins', 'wpuf_downgrade', 'wpuf_downgrade' );
     }
 
     /**

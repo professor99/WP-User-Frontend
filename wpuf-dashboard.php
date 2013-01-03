@@ -5,11 +5,17 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.1 
+ * @version 1.1-fork-2RRR-4.0
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.0 professor99 = 
+* Added can_edit_post() function
+* Added can_delete_post() function
+* Edited delete_post() to suit
+* Redirect to dashboard on login
 
 = 1.1-fork-2RRR-2.1 professor99 = 
 * Replaced anonymous function with suppress_edit_post_link()
@@ -46,13 +52,14 @@ class WPUF_Dashboard {
 
         //Suppress "edit_post_link" on this page
         add_filter( 'edit_post_link', suppress_edit_post_link, 10, 2 ); 
-
+		
         ob_start();
 
         if ( is_user_logged_in() ) {
             $this->post_listing( $post_type );
         } else {
-            printf( __( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout( '', false ) );
+            $login_url = 'http://' . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
+            printf( __( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout( $login_url, false ) );
         }
 
         $content = ob_get_contents();
@@ -61,6 +68,66 @@ class WPUF_Dashboard {
         return $content;
     }
 
+    /**
+     * Can user edit post
+     *
+	 * @param $post_id
+	 * @return string yes|no
+	 * @global WP_User $userdata
+     */
+    function can_edit_post( $post_id ) {
+        global $userdata;
+        
+        $can_edit = 'yes';
+        
+        $curpost = get_post( $post_id );
+        
+        $enable_post_edit = wpuf_get_option( 'enable_post_edit', 'default' );
+        
+        if ( $enable_post_edit == 'no' ) {
+            $can_edit = 'no';
+        } 
+        else if ( !current_user_can( 'edit_post', $post_id ) ) {
+            if ( $enable_post_edit != 'yes' || $userdata->ID != $curpost->post_author ) {
+                $can_edit = 'no';
+            }
+        }
+
+        $can_edit = apply_filters( 'wpuf_can_edit', $can_edit, $post_id );
+        
+        return $can_edit;
+    }
+    
+    /**
+     * Can user delete post
+     *
+	 * @param $post_id
+	 * @return string yes|no
+	 * @global WP_User $userdata
+     */
+    function can_delete_post( $post_id ) {
+        global $userdata;
+        
+        $can_delete = 'yes';
+        
+        $curpost = get_post( $post_id );
+        
+        $enable_post_del = wpuf_get_option( 'enable_post_del', 'default' );
+        
+        if ( $enable_post_del == 'no' ) {
+            $can_delete = 'no';
+        }
+        else if ( !current_user_can( 'delete_post', $post_id ) ) {
+            if ( $enable_post_del != 'yes' || $userdata->ID != $curpost->post_author ) {
+                $can_delete = 'no';
+            }
+        }
+
+        $can_delete = apply_filters( 'wpuf_can_delete', $can_delete, $post_id );
+        
+        return $can_delete;
+    }
+    
     /**
      * List's all the posts by the user
      *
@@ -174,7 +241,7 @@ class WPUF_Dashboard {
                             <?php } ?>
 
                             <td>
-                                <?php if ( wpuf_get_option( 'enable_post_edit' ) == 'yes' ) { ?>
+                                <?php if ( $this->can_edit_post( $post->ID ) == 'yes' ) { ?>
                                     <?php
                                     $edit_page = (int) wpuf_get_option( 'edit_page_id' );
                                     $url = get_permalink( $edit_page );
@@ -184,8 +251,8 @@ class WPUF_Dashboard {
                                     &nbsp;
                                 <?php } ?>
 
-                                <?php if ( wpuf_get_option( 'enable_post_del' ) == 'yes' ) { ?>
-                                    <a href="<?php echo wp_nonce_url( "?action=del&pid=" . $post->ID, 'wpuf_del' ) ?>" onclick="return confirm('Are you sure to delete this post?');"><span style="color: red;"><?php _e( 'Delete', 'wpuf' ); ?></span></a>
+                                <?php if ( $this->can_delete_post( $post->ID ) == 'yes' ) { ?>
+                                    <a href="<?php echo wp_nonce_url( "?action=del&pid=" . $post->ID, 'wpuf_del' . $post->ID ) ?>" onclick="return confirm('Are you sure to delete this post?');"><span style="color: red;"><?php _e( 'Delete', 'wpuf' ); ?></span></a>
                                 <?php } ?>
                             </td>
                         </tr>
@@ -247,29 +314,23 @@ class WPUF_Dashboard {
 
     /**
      * Delete a post
-     *
-     * Only post author and editors has the capability to delete a post
      */
     function delete_post() {
         global $userdata;
 
+        $post_id = $_REQUEST['pid'];
+        
         $nonce = $_REQUEST['_wpnonce'];
-        if ( !wp_verify_nonce( $nonce, 'wpuf_del' ) ) {
+        
+        if ( !wp_verify_nonce( $nonce, 'wpuf_del' . $post_id ) ) {
             die( "Security check" );
         }
 
-        //check, if the requested user is the post author
-        $maybe_delete = get_post( $_REQUEST['pid'] );
+        wp_delete_post( $post_id );
 
-        if ( ($maybe_delete->post_author == $userdata->ID) || current_user_can( 'delete_others_pages' ) ) {
-            wp_delete_post( $_REQUEST['pid'] );
-
-            //redirect
-            $redirect = add_query_arg( array('msg' => 'deleted'), get_permalink() );
-            wp_redirect( $redirect );
-        } else {
-            echo '<div class="wpuf-error">' . __( 'You are not the post author. Cheeting huh!', 'wpuf' ) . '</div>';
-        }
+        //redirect
+        $redirect = add_query_arg( array('msg' => 'deleted'), get_permalink() );
+        wp_redirect( $redirect );
     }
 
 }
