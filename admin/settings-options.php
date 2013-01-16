@@ -4,11 +4,16 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1-fork-2RRR-4.0
+ *@version 1.1-fork-2RRR-4.1
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.1 professor99 =
+* Added "allow_format" option.
+* Added "format_label" option.
+* Added "format_help" option.
 
 = 1.1-fork-2RRR-4.0 professor99 =
 * Added "Users can post?" option.
@@ -118,6 +123,15 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'title_help',
                 'label' => __( 'Post title help text', 'wpuf' )
+            ),
+            array(
+                'name' => 'format_label',
+                'label' => __( 'Post Format label', 'wpuf' ),
+                'default' => 'Post Format'
+            ),
+            array(
+                'name' => 'format_help',
+                'label' => __( 'Post Format help text', 'wpuf' ),
             ),
             array(
                 'name' => 'cat_label',
@@ -330,6 +344,13 @@ function wpuf_settings_fields() {
                 'desc' => __( 'Excerpt character limit (0=unlimited)', 'wpuf' ),
                 'type' => 'text',
                 'default' => '0'
+            ),
+            array(
+                'name' => 'allow_format',
+                'label' => __( 'Allow post format', 'wpuf' ),
+                'desc' => __( 'Users will be able to specify post format', 'wpuf' ),
+                'type' => 'checkbox',
+                'default' => 'off'
             ),
             array(
                 'name' => 'allow_tags',

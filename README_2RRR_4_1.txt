@@ -1,4 +1,4 @@
-README WP User Frontend Version: 1.1-fork-2RRR-4.0 alpha
+README WP User Frontend Version: 1.1-fork-2RRR-4.1 alpha
 ========================================================
 
 Modified Code: Andy Bruin (professor99)
@@ -12,22 +12,11 @@ It is a major update of WP User Frontend concentrating on useability and custome
 It focuses on Add Post and Edit Post functionality.
 There are some bug fixes included as well.
 
-This update sets WP User Frontend default edit/add/delete post permissions to WordPress defaults.
-Old installations retain previous settings.
- 
-The main differences from 1.1-fork-2RRR-3.0 follow:
+This update adds a "Post Format" field to the edit/add post forms.
 
-* Added "Users can post?" option.
-* Added "default" parameter for "Users can edit post?" option.
-* Added "default" parameter for "Users can delete post?" option.
-* Added "default" parameter for "Post Status" option.
-* Added version to support option page.
-* Added Downgrade menu
-* Better language support for info div
-* Enhanced security
-* Added $post_type parameter to wpuf_can_post filter.
-* Added $post_id parameter to wpuf_can_edit filter.
-* Added wpuf_can_delete filter
+The main differences from 1.1-fork-2RRR-4.0 follow:
+
+* Adds a "Post Format" field to the edit/add post forms.
 
 Other changes below in changelog.
 
@@ -78,7 +67,7 @@ http://wordpress.org/support/plugin/wp-user-frontend
 Download
 --------
 
-http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_4_0_alpha.zip
+http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_4_1_alpha.zip
 
 A Github repository is available
 
@@ -154,6 +143,9 @@ Restore 1.1 files directly after this.
 
 Changelog
 ---------
+
+= 1.1-fork-2RRR-4.1 professor99 = 
+* Adds a "Post Format" field to the edit/add post forms.
 
 = 1.1-fork-2RRR-4.0 professor99 = 
 * Added "Users can post?" option.

@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.0
+ * @version 1.1-fork-2RRR-4.1
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.1 professor99 =
+* Implemented Post Format field.
 
 = 1.1-fork-2RRR-4.0 professor99 =
 * Implemented "enable_post_edit" default option.
@@ -474,6 +477,47 @@ class WPUF_Edit_Post {
 						WPUF_Attachment::add_post_fields( $post_type, $curpost );
 					}
 
+					//Add Post Format field if enabled and is supported by current theme and post type
+
+					if ( wpuf_get_option( 'allow_format' ) == 'on' && current_theme_supports( 'post-formats' ) && post_type_supports( $curpost->post_type, 'post-formats' ) ) {
+						$post_formats = get_theme_support( 'post-formats' );
+						
+						if ( is_array( $post_formats[0] ) ) {
+							$post_format = get_post_format( $curpost->ID );
+
+							if ( !$post_format ) {
+								$post_format = '0';
+							} else if ( !in_array( $post_format, $post_formats[0] ) ) {
+								// Add the format to the post format array if it isn't there.
+								$post_formats[0][] = post_format;
+							}	
+					?>
+							<li>
+								<label for="new-post-format">
+									<?php echo wpuf_get_option( 'format_label' ); ?>
+								</label>
+
+								<select name="wpuf_post_format"  id="new-post-format">
+									<option <?php selected( $post_format, '0' ); ?> value="0" > <?php _e('Standard'); ?></option>
+									<?php 
+									foreach ( $post_formats[0] as $format ) { 
+									?>
+										<option <?php selected( $post_format, $format ); ?> value="<?php echo esc_attr( $format ); ?>" > <?php echo esc_html( get_post_format_string( $format ) ); ?></option>
+									<?php 
+									}
+									?>
+								</select>
+								<div class="clear"></div>
+								<?php
+								$helptxt = stripslashes( wpuf_get_option( 'format_help' ) );
+								if ($helptxt) 
+									echo '<p class="description">' . $helptxt . '</p>';
+								?>
+							</li>
+					<?php
+						}
+					}
+
 					if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
 					?>
 						<li>
@@ -849,6 +893,11 @@ class WPUF_Edit_Post {
 				update_post_meta( $post_id, $key, $val );
 			}
 		}
+		
+		//set post format
+		if ( isset( $_POST['wpuf_post_format'] ) )
+			set_post_format( $post_id, $_POST['wpuf_post_format'] );
+		
 
 		//set post expiration date
 		if ( $post_expiry_enable == 'on' ) {
