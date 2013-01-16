@@ -4,11 +4,14 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1-fork-2RRR-4.1
+ *@version 1.1.0-fork-2RRR-4.2
  */
 
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.2 professor99 =
+* Fixed wpuf_edit shortcode typo.
 
 = 1.1-fork-2RRR-4.1 professor99 =
 * Added "allow_format" option.
@@ -482,7 +485,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'edit_page_id',
                 'label' => __( 'Edit Page', 'wpuf' ),
-                'desc' => __( 'Select the page where [wpuf_editpost] is located', 'wpuf' ),
+                'desc' => __( 'Select the page where [wpuf_edit] is located', 'wpuf' ),
                 'type' => 'select',
                 'options' => wpuf_get_pages()
             ),

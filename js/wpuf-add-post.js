@@ -3,12 +3,15 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0
+ * @version 1.1.0-fork-2RRR-4.2
  * @since 1.1-fork-2RRR-3.0  
  */
  
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.2 professor99 =
+* Fixed Jquery $ conflict bug
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Was wpuf_add_post_javascript() in wpuf_add_post.php
@@ -44,10 +47,10 @@ function wpuf_add_post_before_submit(formData, jqForm, options) {
 }
 
 function wpuf_add_post_success(responseXML) { 
-	success = $('success', responseXML).text();
-	message = $('message', responseXML).text();
-	post_id = $('post_id', responseXML).text();
-	redirect_url = $('redirect_url', responseXML).text();
+	success = jQuery('success', responseXML).text();
+	message = jQuery('message', responseXML).text();
+	post_id = jQuery('post_id', responseXML).text();
+	redirect_url = jQuery('redirect_url', responseXML).text();
 	//alert('success=' + success + '\nmessage=' + message + '\npost_id=' + post_id + '\nredirect_url=' + redirect_url);
 	
 	jQuery('#wpuf-info-msg').html(message);

@@ -3,11 +3,14 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0
+ * @version 1.1.0-fork-2RRR-4.2
  */
  
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.2 professor99 =
+* Fixed 'required' message opacity bug
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Moved featured image functions to lib/featured_image.js
@@ -87,6 +90,7 @@ jQuery(document).ready(function($) {
             }
 			
             $('#wpuf-info-msg').html('<div class="wpuf-error">Required field(s) empty.</div>');
+		$('#wpuf-info-msg').fadeTo(0,1);
 
             return false;
         },

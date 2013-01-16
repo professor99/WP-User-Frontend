@@ -1,4 +1,4 @@
-README WP User Frontend Version: 1.1-fork-2RRR-4.1 alpha
+README WP User Frontend Version: 1.1.0-fork-2RRR-4.2 alpha
 ========================================================
 
 Modified Code: Andy Bruin (professor99)
@@ -12,11 +12,14 @@ It is a major update of WP User Frontend concentrating on useability and custome
 It focuses on Add Post and Edit Post functionality.
 There are some bug fixes included as well.
 
-This update adds a "Post Format" field to the edit/add post forms.
+This update fixes a few bugs including a jquery $ conflict with some other plugins.
 
-The main differences from 1.1-fork-2RRR-4.0 follow:
+The main differences from 1.1-fork-2RRR-4.1 follow:
 
-* Adds a "Post Format" field to the edit/add post forms.
+* Bugfix: Changed version to 1.1.0-fork-2RRR-4.2 (eliminates update prompt)
+* Fixed wpuf_edit shortcode typo.
+* Fixed 'required' message opacity bug
+* Fixed Jquery $ conflict bug
 
 Other changes below in changelog.
 
@@ -67,7 +70,7 @@ http://wordpress.org/support/plugin/wp-user-frontend
 Download
 --------
 
-http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_4_1_alpha.zip
+http://2rrr.org.au/downloads/wp-user-frontend/2RRR_3_0/wp-user-frontend_1_1_2RRR_4_2_alpha.zip
 
 A Github repository is available
 
@@ -143,6 +146,12 @@ Restore 1.1 files directly after this.
 
 Changelog
 ---------
+
+= 1.1.0-fork-2RRR-4.2 professor99 = 
+* Bugfix: Changed version to 1.1.0-fork-2RRR-4.2 (eliminates update prompt)
+* Fixed wpuf_edit shortcode typo.
+* Fixed 'required' message opacity bug
+* Fixed Jquery $ conflict bug
 
 = 1.1-fork-2RRR-4.1 professor99 = 
 * Adds a "Post Format" field to the edit/add post forms.
