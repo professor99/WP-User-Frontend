@@ -6,11 +6,14 @@
  * @since 0.2
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0 
+ * @version 1.1-fork-2RRR-4.3 
  */
  
  /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.3 professor99 =
+* Fixed permalink references
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Redirects now filtered by wpuf_post_redirect 
@@ -160,7 +163,8 @@ class WPUF_Subscription {
     function post_redirect( $form, $location, $redirect_url, $post_id ) {
 
         if ( $form == 'add' && $location == 'insert' && $this->has_post_error( $post_id ) ) {
-            $redirect = get_permalink( wpuf_get_option( 'payment_page' ) ) . '?action=wpuf_pay&type=post&post_id=' . $post_id;
+            $payment_page = get_permalink( wpuf_get_option( 'payment_page' ) );
+            $redirect = add_query_arg( array( 'action' => 'wpuf_pay', 'type' => 'post', 'post_id' => $post_id ), $payment_page );
 
             return $redirect;
         }
@@ -281,7 +285,7 @@ class WPUF_Subscription {
             } else {
                 $c_str = $count;
             }
-            ?>
+?>
             <div class="wpuf_sub_info">
                 <h3><?php _e( 'Subscription Details', 'wpuf' ); ?></h3>
                 <div class="text">
@@ -290,7 +294,7 @@ class WPUF_Subscription {
                 </div>
             </div>
 
-            <?php
+<?php
         }
 
         return ob_get_clean();
@@ -302,6 +306,7 @@ class WPUF_Subscription {
      */
     function subscription_packs() {
         $packs = $this->get_subscription_packs();
+        $payment_page = get_permalink( wpuf_get_option( 'payment_page' ) );
 
         ob_start();
 
@@ -310,15 +315,16 @@ class WPUF_Subscription {
             foreach ($packs as $pack) {
                 $duration = ( $pack->duration == 0 ) ? 'unlimited' : $pack->duration;
                 $count = ( $pack->count == 0 ) ? 'unlimited' : $pack->count;
-                ?>
+                $pack_url = add_query_arg( array( 'action' => 'wpuf_pay', 'type' => 'pack', 'pack_id' => $pack->id ), $payment_page );
+?>
                 <li>
                     <h3><?php echo $pack->name; ?> - <?php echo $pack->description; ?></h3>
                     <p><?php echo $count; ?> posts for <?php echo $duration; ?> days.
                         <span class="cost"><?php echo wpuf_get_option( 'currency_symbol' ) . $pack->cost; ?></span>
                     </p>
-                    <p><a href="<?php echo get_permalink( wpuf_get_option( 'payment_page' ) ); ?>?action=wpuf_pay&type=pack&pack_id=<?php echo $pack->id; ?>"><?php _e( 'Buy Now', 'wpuf' ); ?></a></p>
+                    <p><a href="$pack_url"><?php _e( 'Buy Now', 'wpuf' ); ?></a></p>
                 </li>
-                <?php
+<?php
             }
             echo '</ul>';
         }
@@ -331,11 +337,11 @@ class WPUF_Subscription {
      */
     function add_post_info() {
         if ( $this->has_post_error() ) {
-            ?>
+?>
             <div class="info">
                 <?php printf( __( 'This will cost you <strong>%s</strong>. to add a new post. You may buy some bulk package too. ', 'wpuf' ), wpuf_get_option( 'currency_symbol' ) . wpuf_get_option( 'cost_per_post' ) ); ?>
             </div>
-            <?php
+<?php
         }
     }
 

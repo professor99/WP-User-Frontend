@@ -4,11 +4,18 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1.0-fork-2RRR-4.2
+ *@version 1.1.0-fork-2RRR-4.3
  */
 
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.3 professor99 =
+* Added private post status.
+* Added post status field
+* Added slug
+* Prepared_fields now cached
+* Added login message label
 
 = 1.1.0-fork-2RRR-4.2 professor99 =
 * Fixed wpuf_edit shortcode typo.
@@ -42,6 +49,9 @@
 * Added Close label for Close button
 */
 
+//Cached version of $prepared_fields to reduce SQL Queries
+$wpuf_prepared_fields = '';
+
 /**
  * Get the value of a settings field
  *
@@ -49,19 +59,30 @@
  * @return mixed
  */
 function wpuf_get_option( $option ) {
+	global $wpuf_prepared_fields;
 
-    $fields = wpuf_settings_fields();
-    $prepared_fields = array();
+	if ( !empty( $wpuf_prepared_fields ) )
+	{
+		$prepared_fields = $wpuf_prepared_fields;
+	} 
+	else
+	{
+		$fields = wpuf_settings_fields();
+			
+		$prepared_fields = array();
 
-    //prepare the array with the field as key
-    //and set the section name on each field
-    foreach ($fields as $section => $field) {
-        foreach ($field as $fld) {
-            $prepared_fields[$fld['name']] = $fld;
-            $prepared_fields[$fld['name']]['section'] = $section;
-        }
-    }
-
+		//prepare the array with the field as key
+		//and set the section name on each field
+		foreach ($fields as $section => $field) {
+			foreach ($field as $fld) {
+				$prepared_fields[$fld['name']] = $fld;
+				$prepared_fields[$fld['name']]['section'] = $section;
+			}
+		}
+		
+		$wpuf_prepared_fields = $prepared_fields;
+	}
+	
     //get the value of the section where the option exists
     $opt = get_option( $prepared_fields[$option]['section'] );
     $opt = is_array( $opt ) ? $opt : array();
@@ -128,6 +149,17 @@ function wpuf_settings_fields() {
                 'label' => __( 'Post title help text', 'wpuf' )
             ),
             array(
+                'name' => 'slug_label',
+                'label' => __( 'Slug label', 'wpuf' ),
+                'desc' => __( 'Leave blank for default', 'wpuf' ),
+                'default' => 'Slug'
+            ),
+            array(
+                'name' => 'slug_help',
+                'label' => __( 'Slug help text', 'wpuf' ),
+				'default' => __( 'Leave blank for default', 'wpuf' )
+            ),
+            array(
                 'name' => 'format_label',
                 'label' => __( 'Post Format label', 'wpuf' ),
                 'default' => 'Post Format'
@@ -144,6 +176,15 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'cat_help',
                 'label' => __( 'Post category help text', 'wpuf' ),
+            ),
+           array(
+                'name' => 'status_label',
+                'label' => __( 'Post Status label', 'wpuf' ),
+                'default' => 'Post Status'
+            ),
+            array(
+                'name' => 'status_help',
+                'label' => __( 'Post Status help text', 'wpuf' ),
             ),
             array(
                 'name' => 'desc_label',
@@ -218,6 +259,11 @@ function wpuf_settings_fields() {
                 'label' => __( 'Attachment upload button', 'wpuf' ),
                 'default' => 'Add attachment'
             ),
+            array(
+                'name' => 'login_label',
+                'label' => __( 'Login label', 'wpuf' ),
+                'default' => 'This page is restricted. Please %s to view this page.'
+            ),
         ) ),
         'wpuf_frontend_posting' => apply_filters( 'wpuf_options_frontend', array(
             array(
@@ -228,10 +274,18 @@ function wpuf_settings_fields() {
                 'default' => 'default',
                 'options' => array(
                     'default' => 'Default',		
-                    'publish' => 'Publish',
                     'draft' => 'Draft',
-                    'pending' => 'Pending'
+                    'pending' => 'Pending',
+                    'publish' => 'Publish',
+                    'private' => 'Private'
                 )
+            ),
+            array(
+                'name' => 'allow_status',
+                'label' => __( 'Allow post status', 'wpuf' ),
+                'desc' => __( 'Users will be able to specify post status', 'wpuf' ),
+                'type' => 'checkbox',
+                'default' => 'off'
             ),
             array(
                 'name' => 'post_author',
@@ -347,6 +401,13 @@ function wpuf_settings_fields() {
                 'desc' => __( 'Excerpt character limit (0=unlimited)', 'wpuf' ),
                 'type' => 'text',
                 'default' => '0'
+            ),
+            array(
+                'name' => 'allow_slug',
+                'label' => __( 'Allow post slug', 'wpuf' ),
+                'desc' => __( 'Users will be able to specify post slug', 'wpuf' ),
+                'type' => 'checkbox',
+                'default' => 'off'
             ),
             array(
                 'name' => 'allow_format',

@@ -5,11 +5,18 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.0 
+ * @version 1.1-fork-2RRR-4.3 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.3 professor99 =
+* Added 'private' and 'unknown' status to wpuf_show_post_status()
+* Changed name of wpuf_suppress_edit_post_link
+* Fixed insert media bug
+* Exclude thumbnails and attachments in content from attachment list
+* Fixed permalink references
 
 = 1.1-fork-2RRR-4.0 professor99 =
 * Implemented "enable_post_edit" default option.
@@ -72,20 +79,23 @@ function wpuf_auth_redirect_login() {
 function wpuf_show_post_status( $status ) {
 
     if ( $status == 'publish' ) {
-
         $title = __( 'Live', 'wpuf' );
         $fontcolor = '#33CC33';
+    } else if ( $status == 'private' ) {
+        $title = __( 'Private', 'wpuf' );
+        $fontcolor = '#33CC33';
     } else if ( $status == 'draft' ) {
-
         $title = __( 'Offline', 'wpuf' );
         $fontcolor = '#bbbbbb';
     } else if ( $status == 'pending' ) {
-
         $title = __( 'Awaiting Approval', 'wpuf' );
         $fontcolor = '#C00202';
     } else if ( $status == 'future' ) {
         $title = __( 'Scheduled', 'wpuf' );
         $fontcolor = '#bbbbbb';
+    } else {
+        $title = __( 'Unknown', 'wpuf' );
+        $fontcolor = '#bb0000';
     }
 
     echo '<span style="color:' . $fontcolor . ';">' . $title . '</span>';
@@ -234,13 +244,26 @@ function wpfu_get_attachments( $post_id ) {
         'orderby' => 'menu_order'
     );
 
+    $post = get_post( $post_id );
+    $content = $post->post_content;
     $attachments = get_posts( $args );
 
     foreach ($attachments as $attachment) {
+        $id = $attachment->ID;
+        $url = wp_get_attachment_url( $attachment->ID );
+		
+        //exclude thumbnails
+        if ( $id == get_post_thumbnail_id( $post_id ) )
+            continue;
+	
+        //exclude attachments in content
+        if ( strpos( $content, $url ) !== false )
+            continue;
+
         $att_list[] = array(
-            'id' => $attachment->ID,
+            'id' => $id,
             'title' => $attachment->post_title,
-            'url' => wp_get_attachment_url( $attachment->ID ),
+            'url' => $url,
             'mime' => $attachment->post_mime_type
         );
     }
@@ -430,11 +453,10 @@ function wpuf_edit_post_link( $url, $post_id ) {
     $override = wpuf_get_option( 'override_editlink', 'yes' );
     if ( $override == 'yes' ) {
         $url = '';
+		
         if ( wpuf_get_option( 'enable_post_edit' ) != 'no' ) {
             $edit_page = (int) wpuf_get_option( 'edit_page_id' );
-            $url = get_permalink( $edit_page );
-
-            $url = wp_nonce_url( $url . '?pid=' . $post_id, 'wpuf_edit' );
+            $url = wp_nonce_url( add_query_arg( 'pid', $post_id, get_permalink( $edit_page ) ), 'wpuf_edit' );
         }
     }
 
@@ -598,9 +620,10 @@ function wpuf_permalink_nag() {
     echo "<div class='wpuf-error fade'><p>$msg</p></div>";
 }
 
+//Should be fixed in 1.1-fork-2RRR-4.3 
 //if not found %postname%, shows a error msg at admin panel
 if ( !stristr( get_option( 'permalink_structure' ), '%postname%' ) ) {
-    add_action( 'admin_notices', 'wpuf_permalink_nag', 3 );
+    //add_action( 'admin_notices', 'wpuf_permalink_nag', 3 );
 }
 
 function wpuf_option_values() {
@@ -734,7 +757,39 @@ function wpuf_get_image_sizes() {
  * @return string null
  * @since version 1.1-fork-2RRR-2.1 
  */
-function suppress_edit_post_link( $link, $post_id ) {
+function wpuf_suppress_edit_post_link( $link, $post_id ) {
     return '';
 } 
 
+/**
+ * Fix insert media bug
+ *
+ * @since version 1.1-fork-2RRR-4.3 
+ */
+function wpuf_insert_media_fix( $post_id ) {
+	global $wpuf_post_id;
+	global $post_ID; 
+	
+	/* WordPress 3.4.2 fix */
+	$post_ID = $post_id; 
+	
+	/* WordPress 3.5.1 fix */
+	$wpuf_post_id = $post_id;	
+    add_filter( 'media_view_settings', 'wpuf_insert_media_fix_filter', 10, 2 ); 
+} 
+
+/**
+ * Fix insert media editor button filter
+ *
+ * Fixes bug with WordPress 3.5.1
+ *
+ * @since version 1.1-fork-2RRR-4.3 
+ */
+function wpuf_insert_media_fix_filter( $settings, $post ) {
+	global $wpuf_post_id;
+	
+    $settings['post']['id'] = $wpuf_post_id;
+    $settings['post']['nonce'] = wp_create_nonce( 'update-post_' . $wpuf_post_id );
+	
+	return $settings;
+} 

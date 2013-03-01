@@ -5,12 +5,15 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0 
+ * @version 1.1-fork-2RRR-4.3 
  * @since 1.1-fork-2RRR-3.0 
  */
 
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.3 professor99 =
+* Attaches featured image to post if unattached
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Compiled from functions in wpuf.php/wpuf-ajax.php/wpuf-functions.php in previous version
@@ -180,6 +183,12 @@ class WPUF_Featured_Image {
 
 		//set post thumbnail to featured image attach id
 		if ( $attach_id ) {
+			$attachment = get_post( $attach_id );
+			
+			// If this attachment is unattached, attach it. 
+			if ( $attachment->post_parent == 0 ) 
+				wp_update_post( array( 'ID' => $attach_id, 'post_parent' => $post_id ) );
+			
 			set_post_thumbnail( $post_id, $attach_id );
 		}
     }

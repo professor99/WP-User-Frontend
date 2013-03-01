@@ -5,11 +5,14 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.1 
+ * @version 1.1-fork-2RRR-4.3
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.3 professor99 = 
+* Fixed wpuf_suppress_edit_post_link bug
 
 = 1.1-fork-2RRR-2.1 professor99 = 
 * Replaced anonymous function with suppress_edit_post_link()
@@ -44,7 +47,7 @@ class WPUF_Edit_Profile {
      */
     function shortcode() {
         //Suppress "edit_post_link" on this page
-        add_filter( 'edit_post_link', suppress_edit_post_link, 10, 2 ); 
+        add_filter( 'edit_post_link', 'wpuf_suppress_edit_post_link', 10, 2 ); 
 
         ob_start();
 

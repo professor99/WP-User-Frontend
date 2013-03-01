@@ -5,11 +5,16 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.0
+ * @version 1.1-fork-2RRR-4.3
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.3 professor99 = 
+* Added private posts
+* Fixed wpuf_suppress_edit_post_link bug
+* Fixed permalink references
 
 = 1.1-fork-2RRR-4.0 professor99 = 
 * Added can_edit_post() function
@@ -51,14 +56,14 @@ class WPUF_Dashboard {
         extract( shortcode_atts( array('post_type' => 'post'), $atts ) );
 
         //Suppress "edit_post_link" on this page
-        add_filter( 'edit_post_link', suppress_edit_post_link, 10, 2 ); 
+        add_filter( 'edit_post_link', 'wpuf_suppress_edit_post_link', 10, 2 ); 
 		
         ob_start();
 
         if ( is_user_logged_in() ) {
             $this->post_listing( $post_type );
         } else {
-            $login_url = 'http://' . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI']);
+            $login_url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             printf( __( "This page is restricted. Please %s to view this page.", 'wpuf' ), wp_loginout( $login_url, false ) );
         }
 
@@ -139,7 +144,8 @@ class WPUF_Dashboard {
 
         $userdata = get_userdata( $userdata->ID );
         $pagenum = isset( $_GET['pagenum'] ) ? intval( $_GET['pagenum'] ) : 1;
-
+		$self = get_permalink();
+		
         //delete post
         if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == "del" ) {
             $this->delete_post();
@@ -152,7 +158,7 @@ class WPUF_Dashboard {
 
         $args = array(
             'author' => get_current_user_id(),
-            'post_status' => array('draft', 'future', 'pending', 'publish'),
+            'post_status' => array('draft', 'future', 'pending', 'publish', 'private'),
             'post_type' => $post_type,
             'posts_per_page' => wpuf_get_option( 'per_page', 10 ),
             'paged' => $pagenum
@@ -232,28 +238,35 @@ class WPUF_Dashboard {
                             <?php
                             if ( $charging_enabled == 'yes' ) {
                                 $order_id = get_post_meta( $post->ID, 'wpuf_order_id', true );
-                                ?>
+                            ?>
                                 <td>
-                                    <?php if ( $post->post_status == 'pending' && $order_id ) { ?>
-                                        <a href="<?php echo trailingslashit( get_permalink( wpuf_get_option( 'payment_page' ) ) ); ?>?action=wpuf_pay&type=post&post_id=<?php echo $post->ID; ?>">Pay Now</a>
+                                    <?php 
+                                    if ( $post->post_status == 'pending' && $order_id ) { 
+                                        $payment_page = get_permalink( wpuf_get_option( 'payment_page' ) ); 
+                                        $pay_url = add_query_arg( array( 'action' => 'wpuf_pay', 'type' => 'post', 'post_id' => $post->ID ), $payment_page ); 
+									?>
+                                        <a href="$pay_url">Pay Now</a>
                                     <?php } ?>
                                 </td>
                             <?php } ?>
 
                             <td>
-                                <?php if ( $this->can_edit_post( $post->ID ) == 'yes' ) { ?>
-                                    <?php
+                                <?php 
+                                if ( $this->can_edit_post( $post->ID ) == 'yes' ) { 
                                     $edit_page = (int) wpuf_get_option( 'edit_page_id' );
-                                    $url = get_permalink( $edit_page );
-                                    ?>
-                                    <a href="<?php echo wp_nonce_url( $url . '?pid=' . $post->ID, 'wpuf_edit' ); ?>"><?php _e( 'Edit', 'wpuf' ); ?></a>
-                                <?php } else { ?>
-                                    &nbsp;
-                                <?php } ?>
+									$url = add_query_arg( 'pid', $post->ID, get_permalink( $edit_page ) );
+                                ?>
+                                    <a href="<?php echo wp_nonce_url( $url, 'wpuf_edit' ); ?>"><?php _e( 'Edit', 'wpuf' ); ?></a>
+                                <?php 
+                                }
 
-                                <?php if ( $this->can_delete_post( $post->ID ) == 'yes' ) { ?>
-                                    <a href="<?php echo wp_nonce_url( "?action=del&pid=" . $post->ID, 'wpuf_del' . $post->ID ) ?>" onclick="return confirm('Are you sure to delete this post?');"><span style="color: red;"><?php _e( 'Delete', 'wpuf' ); ?></span></a>
-                                <?php } ?>
+                                if ( $this->can_delete_post( $post->ID ) == 'yes' ) { 
+									$url = add_query_arg( array( 'action' => 'del', 'pid' => $post->ID ), $self );
+                                ?>
+                                    <a href="<?php echo wp_nonce_url( $url, 'wpuf_del' . $post->ID ) ?>" onclick="return confirm('Are you sure to delete this post?');"><span style="color: red;"><?php _e( 'Delete', 'wpuf' ); ?></span></a>
+                                <?php 
+                                }
+                                ?>
                             </td>
                         </tr>
                     <?php } ?>
@@ -330,6 +343,7 @@ class WPUF_Dashboard {
 
         //redirect
         $redirect = add_query_arg( array('msg' => 'deleted'), get_permalink() );
+
         wp_redirect( $redirect );
     }
 
