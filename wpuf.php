@@ -5,13 +5,16 @@ Plugin Name: WP User Frontend
 Plugin URI: http://tareq.wedevs.com/2011/01/new-plugin-wordpress-user-frontend/
 Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
-Version: 1.1.0-fork-2RRR-4.2
+Version: 1.1.0-fork-2RRR-4.3
 Author URI: http://tareq.weDevs.com
 Contributors: tareq1988,professor99
 
 Modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
 
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.3 professor99 =
+* Bugfix: Changed version to 1.1.0-fork-2RRR-4.3 
 
 = 1.1.0-fork-2RRR-4.2 professor99 =
 * Bugfix: Changed version to 1.1.0-fork-2RRR-4.2 (eliminates update prompt)
