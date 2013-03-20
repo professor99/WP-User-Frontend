@@ -3,12 +3,16 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0
+ * @version 1.1-fork-2RRR-4.4
  * @since 1.1-fork-2RRR-3.0  
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 =
+* Added reset function
+* WPUF_Featured_Image now global
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Compiled from functions in wpuf.js in previous version
@@ -20,13 +24,15 @@
  
 jQuery(document).ready(function($) {
 
-	var WPUF_Featured_Image = {
+	WPUF_Featured_Image = {
+
 		init: function () {
 			//initialize the featured image uploader
 			this.featImgUploader();
 		},
 		featImgUploader: function() {
-
+			var self = this;
+			
 			if(typeof plupload === 'undefined') {
 				return;
 			}
@@ -35,23 +41,23 @@ jQuery(document).ready(function($) {
 				return;
 			}
 
-			var uploader = new plupload.Uploader(wpuf_featured_image.plupload);
-			$('.wpuf-post-form').on('click', 'a.wpuf-del-ft-image', uploader, this.removeFeatImg);
+			this.uploader = new plupload.Uploader(wpuf_featured_image.plupload);
+			$('.wpuf-post-form').on('click', 'a.wpuf-del-ft-image', this.removeFeatImg);
 
-			uploader.bind('Init', function(up, params) {
+			this.uploader.bind('Init', function(up, params) {
 				if ($('.wpuf-del-ft-image').length) {
 					up.disableBrowse(true); //Disable Upload button
 				}
 			});
 
 			$('#wpuf-ft-upload-pickfiles').click(function(e) {
-				uploader.start();
+				self.uploader.start();
 				e.preventDefault();
 			});
 
-			uploader.init();
+			this.uploader.init();
 
-			uploader.bind('FilesAdded', function(up, files) {
+			this.uploader.bind('FilesAdded', function(up, files) {
 				$.each(files, function(i, file) {
 					$('#wpuf-ft-upload-filelist').append(
 						'<div id="' + file.id + '">' +
@@ -60,14 +66,14 @@ jQuery(document).ready(function($) {
 				});
 				up.refresh(); // Reposition Flash/Silverlight
 				up.disableBrowse(true); //Disable Upload button
-				uploader.start();
+				self.uploader.start();
 			});
 
-			uploader.bind('UploadProgress', function(up, file) {
+			this.uploader.bind('UploadProgress', function(up, file) {
 				$('#' + file.id + " b").html(file.percent + "%");
 			});
 
-			uploader.bind('Error', function(up, err) {
+			this.uploader.bind('Error', function(up, err) {
 				$('#wpuf-ft-upload-filelist').append("<div>Error: " + err.code +
 					", Message: " + err.message +
 					(err.file ? ", File: " + err.file.name : "") +
@@ -77,7 +83,7 @@ jQuery(document).ready(function($) {
 				up.refresh(); // Reposition Flash/Silverlight
 			});
 
-			uploader.bind('FileUploaded', function(up, file, response) {
+			this.uploader.bind('FileUploaded', function(up, file, response) {
 				var resp = $.parseJSON(response.response);
 				//$('#' + file.id + " b").html("100%");
 				$('#' + file.id).remove();
@@ -103,7 +109,7 @@ jQuery(document).ready(function($) {
 		removeFeatImg: function(e) {
 			e.preventDefault();
 
-			if(confirm(wpuf.confirmMsg)) {
+			if( confirm( wpuf.confirmMsg ) ) {
 				var el = $(this),
 					data = {
 						'attach_id' : el.data('id'),
@@ -111,14 +117,16 @@ jQuery(document).ready(function($) {
 						'action' : 'wpuf_feat_img_del'
 					}
 
-				$.post(wpuf.ajaxurl, data, function(){
-					el.parent().remove();
-					$('#wpuf-ft-upload-pickfiles').css('visibility','visible');
-					e.data.refresh();  // Reposition Flash/Silverlight
-					e.data.disableBrowse(false); //Enable Upload button
-				});
+				$.post( wpuf.ajaxurl, data, WPUF_Featured_Image.reset );
 			}
-		}
+		},
+		reset: function () {
+            //done on form reset or removeFeatImg
+            $('#wpuf-ft-upload-filelist div').remove();
+			$('#wpuf-ft-upload-pickfiles').css('visibility','visible');
+			WPUF_Featured_Image.uploader.refresh();  // Reposition Flash/Silverlight
+			WPUF_Featured_Image.uploader.disableBrowse( false ); //Enable Upload button
+		},
 	};	
 
 	//run the bootstrap

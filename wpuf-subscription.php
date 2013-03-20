@@ -6,11 +6,16 @@
  * @since 0.2
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.3 
+ * @version 1.1-fork-2RRR-4.4 
  */
  
  /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 = 
+* Enqueue wpuf and custom css
+* Added wpuf prefix to some selectors to harden style
+* Added wpuf div
 
 = 1.1-fork-2RRR-4.3 professor99 =
 * Fixed permalink references
@@ -286,9 +291,9 @@ class WPUF_Subscription {
                 $c_str = $count;
             }
 ?>
-            <div class="wpuf_sub_info">
+            <div class="wpuf-sub-info">
                 <h3><?php _e( 'Subscription Details', 'wpuf' ); ?></h3>
-                <div class="text">
+                <div class="wpuf-sub-info-text">
                     <strong><?php _e( 'Validity:', 'wpuf' ); ?></strong> <?php echo $d_str; ?>,
                     <strong><?php _e( 'Post Left:', 'wpuf' ); ?></strong> <?php echo $c_str; ?>
                 </div>
@@ -311,7 +316,7 @@ class WPUF_Subscription {
         ob_start();
 
         if ( $packs ) {
-            echo '<ul class="wpuf_packs">';
+            echo '<ul class="wpuf-packs">';
             foreach ($packs as $pack) {
                 $duration = ( $pack->duration == 0 ) ? 'unlimited' : $pack->duration;
                 $count = ( $pack->count == 0 ) ? 'unlimited' : $pack->count;
@@ -320,7 +325,7 @@ class WPUF_Subscription {
                 <li>
                     <h3><?php echo $pack->name; ?> - <?php echo $pack->description; ?></h3>
                     <p><?php echo $count; ?> posts for <?php echo $duration; ?> days.
-                        <span class="cost"><?php echo wpuf_get_option( 'currency_symbol' ) . $pack->cost; ?></span>
+                        <span class="wpuf-packs-cost"><?php echo wpuf_get_option( 'currency_symbol' ) . $pack->cost; ?></span>
                     </p>
                     <p><a href="$pack_url"><?php _e( 'Buy Now', 'wpuf' ); ?></a></p>
                 </li>

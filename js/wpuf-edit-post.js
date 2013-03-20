@@ -1,14 +1,21 @@
 /**
  * Edit Post Javascript
  *
- * @author Tareq Hasan 
+ * @author Andrew Bruin (professor99) 
  * @package WP User Frontend
- * @version 1.1.0-fork-2RRR-4.2
+ * @version 1.1.0-fork-2RRR-4.4
  * @since 1.1-fork-2RRR-3.0  
  */
  
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.4 professor99 =
+* Updated error handling.
+* wpuf_delete_post no longer uses wpuf_self
+* Added updating message (was in wpuf.js)
+* wpuf_edit_post_before_submit now validates using checkSubmit
+* Updated function structure
 
 = 1.1.0-fork-2RRR-4.2 professor99 =
 * Fixed Jquery $ conflict bug
@@ -42,59 +49,79 @@ jQuery(document).ready(function() {
 	};
 
 	// bind form using 'ajaxForm' 
-	jQuery('#wpuf_edit_post_form').ajaxForm(options);
+	jQuery('#wpuf_edit_post_form').ajaxForm( options );
+	
+	// On form reset do WPUF_Featured_Image & WPUF_Attachment reset
+	jQuery('#wpuf_edit_post_form').on( "reset", function() {
+		WPUF_Featured_Image.reset();
+		WPUF_Attachment.reset();
+		return true;
+	});
+	
 });
 
-function wpuf_edit_post_before_submit(formData, jqForm, options) { 
-	jQuery('#wpuf-info-msg').html('&nbsp;');
+function wpuf_edit_post_before_submit( formData, jqForm, options ) { 
+	if ( wpuf_post_check_submit( jqForm ) ) {
+		wpuf_edit_post_updating();
+		return true;
+	}
+	else
+		return false;
 }
 
-function wpuf_edit_post_success(responseXML) { 
+function wpuf_edit_post_success( responseXML ) { 
 	success = jQuery('success', responseXML).text();
 	message = jQuery('message', responseXML).text();
 	post_id = jQuery('post_id', responseXML).text();
 	redirect_url = jQuery('redirect_url', responseXML).text();
 	//alert('success=' + success + '\nmessage=' + message + '\npost_id=' + post_id + '\nredirect_url=' + redirect_url);
 	
-	jQuery('#wpuf-info-msg').html(message);
-	jQuery('#wpuf-info-msg').fadeTo(0,1);
+	if ( success == "true" ) {
+		wpuf_edit_post_show_message( message, true );
 
-	if (success == "true") {
-		if (redirect_url != "") {
-			setTimeout(function() {window.location.replace(redirect_url), 3000});
+		if ( redirect_url != "" ) {
+			setTimeout( function() { window.location.replace( redirect_url ), 3000 } );
 		} else {
-			jQuery('#wpuf-info-msg').fadeTo(4000,0);
-			
-			jQuery('#wpuf_edit_post_form .wpuf-submit').attr({
-				'value': wpuf.update_msg,
-				'disabled': false
-			});	
+			wpuf_edit_post_enable();
 		}
 	}
+	else if ( success == "false" ) {
+		wpuf_edit_post_show_message( message, true );
+		wpuf_edit_post_enable();
+	}
 	else {
-		jQuery('#wpuf_edit_post_form .wpuf-submit').attr({
-			'value': wpuf.update_msg,
-			'disabled': false
-		});	
+		//submit_post() crashed.
+		//Use alert as message can be more than one line.
+		alert( 'Submit Error: ' + responseXML );
+		wpuf_edit_post_enable();
 	}
 }
 
-function wpuf_edit_post_error(XMLHttpRequest, textStatus, errorThrown) {
-	//triggered on ajax errors including timeout.
-	jQuery("#wpuf-info-msg").html = '<div class="wpuf-error">Error: ' + textStatus + '</div>';
-}
+function wpuf_edit_post_updating() {
+	//Display wait message
+	jQuery('#wpuf_edit_post_form .wpuf-submit').attr( {
+		'value': wpuf.updating_msg,
+	} );
+
+	//Clear info line
+	jQuery('#wpuf-info-msg').html( '&nbsp;' );
+
+	//Disable buttons
+	wpuf_edit_post_disable();
+}	
 
 //delete button
 //-------------
 
-function wpuf_delete_post (postID, redirect, close, referer, self, nonce) {
-	if( confirm(wpuf.delete_confirm_msg) ) {
+function wpuf_delete_post( postID, redirect, close, referer, nonce ) {
+	if ( confirm( wpuf.delete_confirm_msg ) ) {
 
 		jQuery.ajax({
 			type: 'post',
 			datatype:	'xml',
+			beforeSubmit: wpuf_delete_post_before_submit,
 			success: wpuf_delete_post_success,
-			error: wpuf_delete_post_error,
+			error: wpuf_edit_post_error,
 			timeout:	3000, 
 			url: wpuf.ajaxurl,
 			data: {
@@ -103,33 +130,101 @@ function wpuf_delete_post (postID, redirect, close, referer, self, nonce) {
 				wpuf_redirect: redirect,
 				wpuf_close: close,
 				wpuf_referer: referer,
-				wpuf_self: self,
 				nonce: nonce
 			}
 		});
 	}
 }	
 
-function wpuf_delete_post_success(responseXML) { 
+function wpuf_delete_post_before_submit( formData, jqForm, options ) { 
+	wpuf_delete_post_deleting();
+}
+
+function wpuf_delete_post_success( responseXML ) { 
 	success = jQuery('success', responseXML).text();
 	message = jQuery('message', responseXML).text();
 	post_id = jQuery('post_id', responseXML).text();
 	redirect_url = jQuery('redirect_url', responseXML).text();
 	//alert('success=' + success + '\nmessage=' + message + '\npost_id=' + post_id + '\nredirect_url=' + redirect_url);
 	
-	jQuery('#wpuf-info-msg').html(message);
-	jQuery('#wpuf-info-msg').fadeTo(0,1);
-
-	if (success == "true") {
-		if (redirect_url != "") {
-			setTimeout(function() {window.location.replace(redirect_url), 3000});
+	if ( success == "true" ) {
+		
+		if ( redirect_url != "" ) {
+			wpuf_edit_post_show_message( message, false );
+			setTimeout( function() { window.location.replace( redirect_url ), 3000 } );
 		} else {
-			jQuery('#wpuf-info-msg').fadeTo(4000,0);
+			//Replace post area with info msg
+			jQuery('#wpuf').replaceWith('<div id="wpuf-info-msg">&nbsp;</div>');
+			
+			//Display message
+			wpuf_edit_post_show_message( message, false );
 		}
+	}
+	else if ( success == "false" ) {
+		wpuf_edit_post_show_message( message, true );
+		wpuf_edit_post_enable();
+	}
+	else {
+		//delete_post() crashed.
+		//Use alert as message can be more than one line.
+		alert( 'Delete Error: ' + responseXML );
+		wpuf_edit_post_enable();
 	}
 }
 
-function wpuf_delete_post_error(XMLHttpRequest, textStatus, errorThrown) {
-	//triggered on ajax errors including timeout.
-	jQuery("#wpuf-info-msg").html = '<div class="wpuf-error">Error: ' + textStatus + '</div>';
+function wpuf_delete_post_deleting() {
+	//Display wait message
+	jQuery('#wpuf-button-delete button').attr( {
+		'value': wpuf.updating_msg,
+	} );
+
+	//Clear info line
+	jQuery('#wpuf-info-msg').html( '&nbsp;' );
+
+	//Disable buttons
+	wpuf_edit_post_disable();
+}
+	
+//common
+//-------------
+
+function wpuf_edit_post_disable() {
+	//Disable submit button
+	jQuery('#wpuf_edit_post_form .wpuf-submit').attr( {
+		'disabled': true
+	} );
+
+	//Disable delete button
+	jQuery('#wpuf-button-delete button').attr( {
+		'disabled': true
+	} );
+}
+
+function wpuf_edit_post_enable() {
+	//Enable submit button
+	jQuery('#wpuf_edit_post_form .wpuf-submit').attr( {
+		'value': wpuf.update_msg,
+		'disabled': false
+	});
+
+	//Enable delete button
+	jQuery('#wpuf-button-delete button').attr( {
+		'value': wpuf.deleteMsg,
+		'disabled': false
+	} );
+}
+
+function wpuf_edit_post_show_message( message, fade ) {
+	jQuery('#wpuf-info-msg').html( message );
+	jQuery('#wpuf-info-msg').fadeTo( 0,1 );
+	
+	if ( fade )
+		jQuery('#wpuf-info-msg').fadeTo( 4000,0 );
+}
+
+function wpuf_edit_post_error( XMLHttpRequest, textStatus, errorThrown ) {
+	//Triggered on ajax errors including timeout.
+	//Use alert as message can be more than one line.
+	alert( "AjaxForm Error\nStatus: " + textStatus + "\nError: " + errorThrown + "\nResponse: " + jQuery(XMLHttpRequest.responseXML).text() );
+	wpuf_edit_post_enable();
 }

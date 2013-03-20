@@ -5,11 +5,21 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.3
+ * @version 1.1-fork-2RRR-4.4
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 =
+* Fixed redirect bug.
+* Added redirect url option
+* Dropped redirect current option
+* If no Post Status field then reset the post's status to the default.
+* wpuf_delete_post no longer uses wpuf_self
+* Category select and validate code moved to wpuf-cat.php
+* Changed wpuf-post-area to wpuf and extended to include delete and close buttons
+* Enqueue wpuf.css, custom css, wpuf-cat.js, wpuf-post.js, and localize wpuf javascript object
 
 = 1.1-fork-2RRR-4.3 professor99 =
 * Added post status field
@@ -85,12 +95,15 @@
  * 	close: true | false 
  * 		true: will display close button and redirect to last page on close (default)
  * 		false: 
- * 	redirect: none | auto | current | last 
- * 		none: do nothing
- * 		auto: If close==true will load last page on post. 
- *		      Else will reload current page on post. (default)
- * 		current: will reload current page on post
- * 		last: will load last page on post 
+ * 	redirect: none | auto | new | last | %url%
+ * 		auto: If close==true will goto last page. 
+ *		      Else will stay on current page. (default)
+ * 		none: will stay on current page
+ * 		new: will goto new page
+ * 		last: will goto last page
+ *		%url%:will goto given %url%
+ *
+ * NB redirect only applies to posts successfully submitted
  */
 
 /* Notes
@@ -107,6 +120,7 @@
 /**
  * Edit Post Class
  * 
+ * @author Tareq Hasan
  * @package WP User Frontend
  * @subpackage WPUF_Edit_Post
  */
@@ -128,19 +142,37 @@ class WPUF_Edit_Post {
 	}
 
 	/**
-	 * Queue up jQuery, jQuery-form, and wpuf-edit-post javascript for header
+	 * Enqueue scripts and styles
 	 *
+	 * @author Andrew Bruin (professor99)
 	 * @since 1.1-fork-2RRR-2.0 
 	 */
-	function enqueue_scripts() {
+	function enqueue() {
+		$path = plugins_url( 'wp-user-frontend' );
+
+		//Add wpuf css
+		wp_enqueue_style( 'wpuf', $path . '/css/wpuf.css' );
+
+		//Add custom css
+		wp_add_inline_style( 'wpuf', wpuf_get_option( 'custom_css' ) );
+
+		//Add scripts		
 		wp_enqueue_script( 'jquery' );
 		wp_enqueue_script( 'jquery-form' );
-		wp_enqueue_script( 'wpuf_edit_post', plugins_url( 'js/wpuf-edit-post.js',  __FILE__ ) );
+		wp_enqueue_script( 'wpuf-cat', $path . '/js/wpuf-cat.js', array( 'jquery' ) );
+		wp_enqueue_script( 'wpuf-post', $path . '/js/wpuf-post.js', array( 'jquery' ) );
+		wp_enqueue_script( 'wpuf-edit-post', $path . '/js/wpuf-edit-post.js', array( 'jquery', 'jquery-form' ) );
+
+		//Create wpuf javascript object
+		wpuf_post_localize();
 	}	
 
 	/**
-	* Delete a post
-	*/
+	 * Delete a post
+	 *
+	 * @author Andrew Bruin (professor99)
+	 * @since 1.1-fork-2RRR-3.0 
+	 */
 	function delete_post() {
 		//Set header content type to XML
 		header( 'Content-Type: text/xml' );
@@ -149,7 +181,7 @@ class WPUF_Edit_Post {
 		
 		if ( !wp_verify_nonce( $_POST['nonce'], 'wpuf-delete-post' . $post_id  ) ) {
 			$message = wpuf_error_msg( __( 'Cheating?' ) );
-			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
+			echo '<root><success>false</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message></root>';
 			exit;
 		}
 
@@ -157,29 +189,25 @@ class WPUF_Edit_Post {
 		wp_delete_post( $post_id );
 		
 		//Set after delete redirect
+
+		$redirect_url = '';
+
 		switch ($_POST['wpuf_redirect']) {
 			case "auto":
-				if ($_POST['wpuf_close'] == true) {
+				if ( $_POST['wpuf_close'] == true )
 					$redirect_url = $_POST['wpuf_referer'];
-				} else {
-					$redirect_url = $_POST['wpuf_self'];
-				}
-				break;
-			case "current":
-				$redirect_url = $_POST['wpuf_self'];
 				break;
 			case "last":
 				$redirect_url = $_POST['wpuf_referer'];
 				break;
-			default:
-				$redirect_url = "";
 		}
 		
 		//Use this filter if you want to change the return address on delete
 		$redirect_url = apply_filters( 'wpuf_post_redirect', 'edit', 'delete', $redirect_url, $post_id );
+		$redirect_url = htmlspecialchars( $redirect_url, ENT_QUOTES, "UTF-8" );
 
 		$message = wpuf_error_msg( __('Post deleted', 'wpuf') );
-		echo '<root><success>true</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+		echo '<root><success>true</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
 		
 		exit;
 	}
@@ -187,36 +215,41 @@ class WPUF_Edit_Post {
 	/**
 	 * Handles the edit post shortcode
 	 *
-	 * @param $atts
-	 * @return string generated form by the plugin
+	 * Generates the edit post form
+	 *
+	 * @author Tareq Hasan
 	 * @global WP_User $userdata
+	 *
+	 * @param array $atts attributes
 	 */
 	function shortcode( $atts ) {
 		global $userdata;
 
 		//echo '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_GET=' . print_r($_GET,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>'; 
 
-		//Add javascript files
-		$this->enqueue_scripts();
-
-		extract( shortcode_atts( array('close' => 'true', 'redirect' => 'auto'), $atts ) );
-
 		//Suppress "edit_post_link" on this page
 		add_filter( 'edit_post_link', 'wpuf_suppress_edit_post_link', 10, 2 ); 
 
+		//Enqueue scripts and styles
+		$this->enqueue();
+
+		extract( shortcode_atts( array('close' => 'true', 'redirect' => 'auto'), $atts ) );
+
 		ob_start();
+
+		echo "<div id='wpuf'>\n";
 
 		//Set referer URL. 
 		if ( isset( $_GET['wpuf_referer'] ) ) {
-			$this->wpuf_referer = htmlspecialchars( $_GET['wpuf_referer'] );
+			$this->wpuf_referer = $_GET['wpuf_referer'];
 		} else if ( isset( $_SERVER['HTTP_REFERER'] ) ) {
-			$this->wpuf_referer = htmlspecialchars( $_SERVER['HTTP_REFERER'] );
+			$this->wpuf_referer = $_SERVER['HTTP_REFERER'];
 		} else {
 			$this->wpuf_referer = '';
 		}
 
 		//URL of this page
-		$this->wpuf_self = "http://" . $_SERVER['HTTP_HOST'] . htmlspecialchars( $_SERVER['REQUEST_URI'] );
+		$this->wpuf_self = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 
 		//login url
 
@@ -224,6 +257,8 @@ class WPUF_Edit_Post {
 
 		if ( $this->wpuf_referer )
 			$login_url = add_query_arg( 'wpuf_referer', $this->wpuf_referer, $this->wpuf_self );
+			
+		$login_url = htmlspecialchars( $login_url, ENT_QUOTES, "UTF-8" );
 
 		$this->logged_in = is_user_logged_in();
 
@@ -264,7 +299,7 @@ class WPUF_Edit_Post {
 
 		if ($info) {
 			if ( $info == 'restricted' )
-				$info = sprintf(__( wpuf_get_option( 'login_label' ), 'wpuf' ), wp_loginout($login_url, false ) );
+				$info = sprintf( wpuf_get_option( 'login_label' ), wp_loginout( $login_url, false ) );
 			else
 				$info = __( $info, 'wpuf' );
 
@@ -291,21 +326,24 @@ class WPUF_Edit_Post {
 				$can_delete = apply_filters( 'wpuf_can_delete', $can_delete, $post_id );
 
 				if ( $can_delete ) {
+					$referer = htmlspecialchars( $this->wpuf_referer, ENT_QUOTES, "UTF-8" );
 					$nonce = wp_create_nonce( 'wpuf-delete-post' . $post_id );
-					$onclick = "wpuf_delete_post( $post_id, \"$redirect\", \"$close\", \"$this->wpuf_referer\", \"$this->wpuf_self\", \"$nonce\" );return false;";
+					$onclick = "wpuf_delete_post( $post_id, \"$redirect\", \"$close\", \"$referer\", \"$nonce\" );return false;";
 					$delete_label = esc_attr( wpuf_get_option( 'delete_label' ) );
-					echo '<div id="wpuf-button-delete"><button class="wpuf-button" type="button" onclick=\'' . $onclick . '\'>' . $delete_label . '</button></div>';
+					echo '<div id="wpuf-button-delete"><button class="wpuf-button" type="button" onclick=\'' . $onclick . '\'>' . $delete_label . '</button></div>' . "\n";
 				}	
 			} 
 		}
 
-		//Use this filter if you want to change the return address on close
-		$redirect_url = apply_filters( 'wpuf_post_redirect', 'edit', 'close', $this->wpuf_referer, $post_id);
+		//Use this filter if you want to change the return address on Close
+		$redirect_url = apply_filters( 'wpuf_post_redirect', 'add', 'close', $this->wpuf_referer, '');
 
 		if ($redirect_url != "" && $close == "true") {
-			echo '<div id="wpuf-button-close"><a class="wpuf-button" href="' . $redirect_url . '">' . esc_attr( wpuf_get_option( 'close_label' ) ) . '</a></div>';
+			$redirect_url = htmlspecialchars( $redirect_url, ENT_QUOTES, "UTF-8" );
+			echo '<div id="wpuf-button-close"><a class="wpuf-button" href="' . $redirect_url . '">' . esc_attr( wpuf_get_option( 'close_label' ) ) . '</a></div>' . "\n";
 		}
 
+		echo "</div>\n";
 		$content = ob_get_contents();
 		ob_end_clean();
 		return $content;
@@ -314,17 +352,19 @@ class WPUF_Edit_Post {
 	/**
 	 * Main edit post form
 	 *
-	 * @param string $post post
-	 * @param string $close Display Close Button "true"|"false"
-	 * @param string $redirect Redirect after post "auto"|"current"|"last"|"new"
-	 * @return string html
-	 *
-	 * global $userdata;
+	 * @author Tareq Hasan
+	 * @global $userdata;
 	 * @global wpdb $wpdb
+	 * @global WPUF_Cat $wpuf_cat
+	 *
+	 * @param WP_Post $post Post object
+	 * @param string $close Display Close Button "true"|"false"
+	 * @param string $redirect Redirect after post "none" | "auto" | "new" | "last" | %url%
 	 */
 	function edit_form( $post, $close, $redirect ) {
 		global $userdata;
 		global $wpdb;
+		global $wpuf_cat;
 
 		$post_id = $post->ID;
 		$post_type = $post->post_type;
@@ -340,330 +380,304 @@ class WPUF_Edit_Post {
 		}
 		
 		$tagslist = implode( ', ', $tagsarray );
-		$categories = get_the_category( $post_id );
 		$featured_image = wpuf_get_option( 'enable_featured_image' );
 ?>
-		<div id="wpuf-post-area">
-			<form name="wpuf_edit_post_form" id="wpuf_edit_post_form" action="" enctype="multipart/form-data" method="POST">
-				<?php wp_nonce_field( 'wpuf-edit-post' . $post_id ) ?>
-				<ul class="wpuf-post-form">
-					<?php 
-					do_action( 'wpuf_post_form', 'edit', 'top', $post_type, $post ); 
-					wpuf_build_custom_field_form( 'top', true, $post_id );
+		<form id="wpuf_edit_post_form" name="wpuf_edit_post_form" action="" enctype="multipart/form-data" method="POST">
+			<?php wp_nonce_field( 'wpuf-edit-post' . $post_id ) ?>
+			<ul class="wpuf-post-form">
+				<?php 
+				do_action( 'wpuf_post_form', 'edit', 'top', $post_type, $post ); 
+				wpuf_build_custom_field_form( 'top', true, $post_id );
 
-					if ( $featured_image == 'yes' && current_theme_supports( 'post-thumbnails' ) ) {
-						WPUF_Featured_Image::add_post_fields( $post_type, $post );
-					}
+				if ( $featured_image == 'yes' && current_theme_supports( 'post-thumbnails' ) ) {
+					WPUF_Featured_Image::add_post_fields( $post_type, $post );
+				}
+				?>
+
+				<li>
+					<label for="wpuf-post-title">
+						<?php echo wpuf_get_option( 'title_label' ); ?> <span class="required">*</span>
+					</label>
+					<input class="requiredField" type="text" name="wpuf_post_title" id="wpuf-post-title" minlength="2" value="<?php echo esc_html( $post->post_title ); ?>">
+					<div class="clear"></div>
+					<?php
+					$helptxt = stripslashes( wpuf_get_option( 'title_help' ) );
+					if ($helptxt) 
+						echo '<p class="description">' . $helptxt . '</p>';
 					?>
-
+				</li>
+				<?php 
+				if ( wpuf_get_option( 'allow_slug' ) == 'on' ) {
+				?>
 					<li>
-						<label for="new-post-title">
-							<?php echo wpuf_get_option( 'title_label' ); ?> <span class="required">*</span>
+						<label for="wpuf-slug">
+							<?php echo wpuf_get_option( 'slug_label' ); ?>
 						</label>
-						<input class="requiredField" type="text" name="wpuf_post_title" id="new-post-title" minlength="2" value="<?php echo esc_html( $post->post_title ); ?>">
+						<input type="text" name="wpuf_slug" id="wpuf-slug" value="<?php echo esc_html( $post->post_name ); ?>">
 						<div class="clear"></div>
 						<?php
-						$helptxt = stripslashes( wpuf_get_option( 'title_help' ) );
+						$helptxt = stripslashes( wpuf_get_option( 'slug_help' ) );
 						if ($helptxt) 
 							echo '<p class="description">' . $helptxt . '</p>';
 						?>
 					</li>
-					<?php 
-					if ( wpuf_get_option( 'allow_slug' ) == 'on' ) {
+				<?php 
+				}
+				
+				do_action( 'wpuf_post_form', 'edit', 'description', $post_type, $post ); 
+				wpuf_build_custom_field_form( 'description', true, $post_id );
+
+				?>
+				
+				<li>
+					<label for="wpuf-post-content">
+						<?php echo wpuf_get_option( 'desc_label' ); ?> <span class="required">*</span>
+					</label>
+					<div class="clear"></div>
+					<?php
+					$editor = wpuf_get_option( 'editor_type' );
+
+					//Filter $editor. Useful for adding custom editors or assigning editors according to users..
+					$editor = apply_filters( 'wpuf_editor_type', $editor );
+
+					if ( $editor == 'full' ) {
+						wp_editor( $post->post_content, 'wpuf-post-content', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => false, 'textarea_rows' => 8) );
+					} else if ( $editor == 'rich' ) {
+						wp_editor( $post->post_content, 'wpuf-post-content', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => true, 'textarea_rows' => 8) );
+					} else if ( $editor == 'plain' ) { 
 					?>
-						<li>
-							<label for="new-post-slug">
-								<?php echo wpuf_get_option( 'slug_label' ); ?>
-							</label>
-							<input type="text" name="wpuf_slug" id="wpuf-slug" value="<?php echo esc_html( $post->post_name ); ?>">
-							<div class="clear"></div>
-							<?php
-							$helptxt = stripslashes( wpuf_get_option( 'slug_help' ) );
-							if ($helptxt) 
-								echo '<p class="description">' . $helptxt . '</p>';
-							?>
-						</li>
+						<textarea name="wpuf_post_content" class="requiredField wpuf-editor-plain" id="wpuf-post-content" cols="60" rows="8"><?php echo esc_textarea( $post->post_content ); ?></textarea>
 					<?php 
+					} else {
+						//Use custom editor. 
+						//Two ways to enable.
+						//1. wpuf_editor_type filter above.
+						//2. showtime_wpuf_options_frontend filter.
+						do_action('wpuf_custom_editor', $editor, $post->post_content, 'wpuf-post-content', 'wpuf_post_content');
 					}
-					
-					do_action( 'wpuf_post_form', 'edit', 'description', $post_type, $post ); 
-					wpuf_build_custom_field_form( 'description', true, $post_id );
-
 					?>
-					
+
+					<div class="clear"></div>
+					<?php
+					$helptxt = stripslashes( wpuf_get_option( 'desc_help' ) );
+					if ($helptxt) 
+						echo '<p class="description-left">' . $helptxt . '</p>';
+					?>
+				</li>
+
+				<?php
+				do_action( 'wpuf_post_form', 'edit', 'after_description', $post_type, $post ); 
+				wpuf_build_custom_field_form( 'after_description', true, $post_id );
+
+				if ( wpuf_get_option( 'allow_excerpt' ) == 'on' ) {
+					$max_chars = wpuf_get_option( 'excerpt_max_chars' );
+
+					//Get excerpt
+					$query = "SELECT post_excerpt FROM $wpdb->posts WHERE ID=$post_id LIMIT 1";
+					$result = $wpdb->get_results($query, ARRAY_A);
+					$excerpt = $result[0]['post_excerpt'];						
+				?>
 					<li>
-						<label for="new-post-desc">
-							<?php echo wpuf_get_option( 'desc_label' ); ?> <span class="required">*</span>
-						</label>
-						<div class="clear"></div>
-						<?php
-						$editor = wpuf_get_option( 'editor_type' );
-
-						//Filter $editor. Useful for adding custom editors or assigning editors according to users..
-						$editor = apply_filters( 'wpuf_editor_type', $editor );
-
-						if ( $editor == 'full' ) {
-							wp_editor( $post->post_content, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => false, 'textarea_rows' => 8) );
-						} else if ( $editor == 'rich' ) {
-							wp_editor( $post->post_content, 'new-post-desc', array('textarea_name' => 'wpuf_post_content', 'editor_class' => 'requiredField', 'teeny' => true, 'textarea_rows' => 8) );
-						} else if ( $editor == 'plain' ) { 
-						?>
-							<textarea name="wpuf_post_content" class="requiredField wpuf-editor-plain" id="new-post-desc" cols="60" rows="8"><?php echo esc_textarea( $post->post_content ); ?></textarea>
+						<label for="wpuf-excerpt">
 						<?php 
-						} else {
-							//Use custom editor. 
-							//Two ways to enable.
-							//1. wpuf_editor_type filter above.
-							//2. showtime_wpuf_options_frontend filter.
-							do_action('wpuf_custom_editor', $editor, $post->post_content, 'new-post-desc', 'wpuf_post_content');
+						if ($max_chars == 0) {
+							echo wpuf_get_option( 'excerpt_label' );
+							$maxlength = '';
+						} else {	
+							echo wpuf_get_option( 'excerpt_label' ) . ' (max '. $max_chars . ' chars)';
+							$maxlength = 'maxlength="' . $max_chars . '"';
+						}	
+
+						if ( wpuf_get_option( 'require_excerpt' ) == 'on' ) {
+						?>	
+							<span class="required">*</span>
+						<?php
 						}
 						?>
-
+						</label>
 						<div class="clear"></div>
-						<?php
-						$helptxt = stripslashes( wpuf_get_option( 'desc_help' ) );
+						<div class="wpuf-textarea-container">
+							<?php
+							if ( wpuf_get_option( 'require_excerpt' ) == 'on' ) {
+							?>	
+								<textarea class="requiredField" id="wpuf-excerpt" name="wpuf_excerpt" cols="80" rows="2" <?php echo $maxlength ?> ><?php echo $excerpt; ?></textarea>
+							<?php
+							} else {
+							?>
+								<textarea id="wpuf-excerpt" name="wpuf_excerpt" cols="80" rows="2" <?php echo $maxlength ?> ><?php echo $excerpt; ?></textarea>
+							<?php	
+							}
+							?>
+						</div>
+						<div class="clear"></div>
+						<?php	
+						$helptxt = stripslashes( wpuf_get_option( 'excerpt_help' ) );
 						if ($helptxt) 
 							echo '<p class="description-left">' . $helptxt . '</p>';
 						?>
 					</li>
+				<?php
+				}
 
-					<?php
-					do_action( 'wpuf_post_form', 'edit', 'after_description', $post_type, $post ); 
-					wpuf_build_custom_field_form( 'after_description', true, $post_id );
+				if ( wpuf_get_option( 'allow_tags' ) == 'on' ) {
+				?>
+					<li>
+						<label for="wpuf-post-tags">
+							<?php echo wpuf_get_option( 'tag_label' ); ?>
+						</label>
+						<input type="text" name="wpuf_post_tags" id="wpuf-post-tags" value="<?php echo $tagslist; ?>">
+						<div class="clear"></div>
+						<?php
+						$helptxt = stripslashes( wpuf_get_option( 'tag_help' ) );
+						if ($helptxt) 
+							echo '<p class="description">' . $helptxt . '</p>';
+						?>
+					</li>
+				<?php 
+				}
 
-					if ( wpuf_get_option( 'allow_excerpt' ) == 'on' ) {
-						$max_chars = wpuf_get_option( 'excerpt_max_chars' );
+				do_action( 'wpuf_post_form', 'edit', 'tag', $post_type, $post ); 
+				wpuf_build_custom_field_form( 'tag', true, $post_id ); 
+				
+				//Add attachment fields if enabled
+				
+				$allow_upload = wpuf_get_option( 'allow_attachment' );
+				
+				if ( $allow_upload == 'yes' ) {
+					WPUF_Attachment::add_post_fields( $post_type, $post );
+				}
 
-						//Get excerpt
-						$query = "SELECT post_excerpt FROM $wpdb->posts WHERE ID=$post_id LIMIT 1";
-						$result = $wpdb->get_results($query, ARRAY_A);
-						$excerpt = $result[0]['post_excerpt'];						
-					?>
-						<li>
-							<label for="wpuf-excerpt">
-							<?php 
-							if ($max_chars == 0) {
-								echo wpuf_get_option( 'excerpt_label' );
-								$maxlength = '';
-							} else {	
-								echo wpuf_get_option( 'excerpt_label' ) . ' (max '. $max_chars . ' chars)';
-								$maxlength = 'maxlength="' . $max_chars . '"';
-							}	
+				//Add Post Format field if enabled and is supported by current theme and post type
 
-							if ( wpuf_get_option( 'require_excerpt' ) == 'on' ) {
-							?>	
-								<span class="required">*</span>
-							<?php
-							}
-							?>
-							</label>
-							<div class="clear"></div>
-							<div class="wpuf-textarea-container">
-								<?php
-								if ( wpuf_get_option( 'require_excerpt' ) == 'on' ) {
-								?>	
-									<textarea class="requiredField" id="wpuf-excerpt" name="wpuf_excerpt" cols="80" rows="2" <?php echo $maxlength ?> ><?php echo $excerpt; ?></textarea>
-								<?php
-								} else {
-								?>
-									<textarea id="wpuf-excerpt" name="wpuf_excerpt" cols="80" rows="2" <?php echo $maxlength ?> ><?php echo $excerpt; ?></textarea>
-								<?php	
-								}
-								?>
-							</div>
-							<div class="clear"></div>
-							<?php	
-							$helptxt = stripslashes( wpuf_get_option( 'excerpt_help' ) );
-							if ($helptxt) 
-								echo '<p class="description-left">' . $helptxt . '</p>';
-							?>
-						</li>
-					<?php
-					}
-
-					if ( wpuf_get_option( 'allow_tags' ) == 'on' ) {
-					?>
-						<li>
-							<label for="new-post-tags">
-								<?php echo wpuf_get_option( 'tag_label' ); ?>
-							</label>
-							<input type="text" name="wpuf_post_tags" id="new-post-tags" value="<?php echo $tagslist; ?>">
-							<div class="clear"></div>
-							<?php
-							$helptxt = stripslashes( wpuf_get_option( 'tag_help' ) );
-							if ($helptxt) 
-								echo '<p class="description">' . $helptxt . '</p>';
-							?>
-						</li>
-					<?php 
-					}
-
-					do_action( 'wpuf_post_form', 'edit', 'tag', $post_type, $post ); 
-					wpuf_build_custom_field_form( 'tag', true, $post_id ); 
+				if ( wpuf_get_option( 'allow_format' ) == 'on' && current_theme_supports( 'post-formats' ) && post_type_supports( $post_type, 'post-formats' ) ) {
+					$post_formats = get_theme_support( 'post-formats' );
 					
-					//Add attachment fields if enabled
-					
-					$allow_upload = wpuf_get_option( 'allow_attachment' );
-					
-					if ( $allow_upload == 'yes' ) {
-						WPUF_Attachment::add_post_fields( $post_type, $post );
-					}
+					if ( is_array( $post_formats[0] ) ) {
+						$post_format = get_post_format( $post_id );
 
-					//Add Post Format field if enabled and is supported by current theme and post type
-
-					if ( wpuf_get_option( 'allow_format' ) == 'on' && current_theme_supports( 'post-formats' ) && post_type_supports( $post_type, 'post-formats' ) ) {
-						$post_formats = get_theme_support( 'post-formats' );
-						
-						if ( is_array( $post_formats[0] ) ) {
-							$post_format = get_post_format( $post_id );
-
-							if ( !$post_format ) {
-								$post_format = '0';
-							} else if ( !in_array( $post_format, $post_formats[0] ) ) {
-								// Add the format to the post format array if it isn't there.
-								$post_formats[0][] = post_format;
-							}	
-					?>
-							<li>
-								<label for="new-post-format">
-									<?php echo wpuf_get_option( 'format_label' ); ?>
-								</label>
-
-								<select name="wpuf_post_format"  id="new-post-format">
-									<option <?php selected( $post_format, '0' ); ?> value="0" > <?php _e('Standard'); ?></option>
-									<?php 
-									foreach ( $post_formats[0] as $format ) { 
-									?>
-										<option <?php selected( $post_format, $format ); ?> value="<?php echo esc_attr( $format ); ?>" > <?php echo esc_html( get_post_format_string( $format ) ); ?></option>
-									<?php 
-									}
-									?>
-								</select>
-								<div class="clear"></div>
-								<?php
-								$helptxt = stripslashes( wpuf_get_option( 'format_help' ) );
-								if ($helptxt) 
-									echo '<p class="description">' . $helptxt . '</p>';
-								?>
-							</li>
-					<?php
-						}
-					}
-
-					if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
-					?>
+						if ( !$post_format ) {
+							$post_format = '0';
+						} else if ( !in_array( $post_format, $post_formats[0] ) ) {
+							// Add the format to the post format array if it isn't there.
+							$post_formats[0][] = post_format;
+						}	
+				?>
 						<li>
-							<label for="new-post-cat">
-								<?php echo wpuf_get_option( 'cat_label' ); ?> <span class="required">*</span>
+							<label for="wpuf_post_format">
+								<?php echo wpuf_get_option( 'format_label' ); ?>
 							</label>
 
-							<?php
-							$exclude = wpuf_get_option( 'exclude_cats' );
-							$cat_type = wpuf_get_option( 'cat_type' );
-
-							$cats = get_the_category( $post_id );
-							$selected = 0;
-							if ( $cats ) {
-								$selected = $cats[0]->term_id;
-							}
-							//var_dump( $cats );
-							//var_dump( $selected );
-							?>
-							<div class="category-wrap" style="float:left;">
-								<div id="lvl0">
-									<?php
-									if ( $cat_type == 'normal' ) {
-										wp_dropdown_categories( 'show_option_none=' . __( '-- Select --', 'wpuf' ) . '&hierarchical=1&hide_empty=0&orderby=name&name=category[]&id=cat&show_count=0&title_li=&use_desc_for_title=1&class=cat requiredField&exclude=' . $exclude . '&selected=' . $selected );
-									} else if ( $cat_type == 'ajax' ) {
-										wp_dropdown_categories( 'show_option_none=' . __( '-- Select --', 'wpuf' ) . '&hierarchical=1&hide_empty=0&orderby=name&name=category[]&id=cat-ajax&show_count=0&title_li=&use_desc_for_title=1&class=cat requiredField&depth=1&exclude=' . $exclude . '&selected=' . $selected );
-									} else {
-										wpuf_category_checklist( $post_id );
-									}
-									?>
-								</div>
-							</div>
-							<div class="loading"></div>
-							<div class="clear"></div>
-							<?php
-							$helptxt = stripslashes( wpuf_get_option( 'cat_help' ) );
-							if ($helptxt) 
-								echo '<p class="description">' . $helptxt . '</p>';
-							?>
-						</li>
-					<?php
-					}
-
-					//Set author according to 'post author' option.
-					//If user logged in and 'post_author' option is set to 'original' then set post author to user.
-					//Else set post author to 'map_author' option value.
-					if ($this->logged_in  && wpuf_get_option( 'post_author' ) == 'original') {
-						$post_author = $userdata->ID;
-					} else {
-						$post_author = wpuf_get_option( 'map_author' );
-					}
-					
-					//Add Post Status field if enabled and user is logged in
-					if ( wpuf_get_option( 'allow_status') == 'on' && $this->logged_in) {
-						$post_status = get_post_status($post_id ) ;
-
-						$post_type_object = get_post_type_object( $post_type );
-					?>
-						<li>
-							<label for="new-post-status">
-								<?php echo wpuf_get_option( 'status_label' ); ?>
-							</label>
-
-							<select name="wpuf_post_status"  id="new-post-status">
-								<option <?php selected( $post_status, 'draft' ); ?> value="draft" > <?php _e('Draft'); ?></option>
-								<option <?php selected( $post_status, 'pending' ); ?> value="pending" > <?php _e('Pending'); ?></option>
-								<?php
-								if( user_can( $post_author, $post_type_object->cap->publish_posts ) ) { 
+							<select name="wpuf_post_format"  id="wpuf_post_format">
+								<option <?php selected( $post_format, '0' ); ?> value="0" > <?php _e('Standard'); ?></option>
+								<?php 
+								foreach ( $post_formats[0] as $format ) { 
 								?>
-									<option <?php selected( $post_status, 'publish' ); ?> value="publish" > <?php _e('Publish'); ?></option>
-									<option <?php selected( $post_status, 'private' ); ?> value="private" > <?php _e('Private'); ?></option>
-								<?php
+									<option <?php selected( $post_format, $format ); ?> value="<?php echo esc_attr( $format ); ?>" > <?php echo esc_html( get_post_format_string( $format ) ); ?></option>
+								<?php 
 								}
 								?>
 							</select>
 							<div class="clear"></div>
 							<?php
-							$helptxt = stripslashes( wpuf_get_option( 'status_help' ) );
+							$helptxt = stripslashes( wpuf_get_option( 'format_help' ) );
 							if ($helptxt) 
-								echo '<p class="description">' . $helptxt . '</p>';	
+								echo '<p class="description">' . $helptxt . '</p>';
 							?>
 						</li>
-					<?php
+				<?php
 					}
+				}
 
-					$this->publish_date_form( $post );
-					$this->expiry_date_form( $post );
-
-					wpuf_build_custom_field_form( 'bottom', true, $post_id ); 
-
-					do_action( 'wpuf_post_form', 'edit', 'submit', $post_type, $post ); 
-					?>
-
-					<li id="wpuf-submit-li">
-						<div id="wpuf-info-msg">&nbsp;</div>
-						<input class="wpuf-submit" type="submit" name="wpuf_edit_post_submit" value="<?php echo esc_attr( wpuf_get_option( 'update_label' ) ); ?>">
-						<input type="hidden" name="post_id" value="<?php echo $post_id; ?>">
-						<input type="hidden" name="wpuf_close" value="<?php echo $close ?>" />
-						<input type="hidden" name="wpuf_redirect" value="<?php echo $redirect ?>" />
-						<input type="hidden" name="wpuf_self" value="<?php echo $this->wpuf_self ?>" />
-						<input type="hidden" name="wpuf_referer" value="<?php echo $this->wpuf_referer ?>" />
+				if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
+				?>
+					<li>
+						<label>
+							<?php echo wpuf_get_option( 'cat_label' ); ?> <span class="required">*</span>
+						</label>
+						<?php
+						$wpuf_cat->select( $post_id );				
+						?>
+						<div class="loading"></div>
+						<div class="clear"></div>
+						<?php
+						$helptxt = stripslashes( wpuf_get_option( 'cat_help' ) );
+						if ($helptxt) 
+							echo '<p class="description">' . $helptxt . '</p>';
+						?>
 					</li>
+				<?php
+				}
 
-					<?php do_action( 'wpuf_post_form', 'edit', 'bottom', $post_type, $post ); ?>
-				</ul>
-			</form>
-		</div>
+				//Set author according to 'post author' option.
+				//If user logged in and 'post_author' option is set to 'original' then set post author to user.
+				//Else set post author to 'map_author' option value.
+				if ($this->logged_in  && wpuf_get_option( 'post_author' ) == 'original') {
+					$post_author = $userdata->ID;
+				} else {
+					$post_author = wpuf_get_option( 'map_author' );
+				}
+				
+				//Add Post Status field if enabled and user is logged in
+				if ( wpuf_get_option( 'allow_status' ) == 'on' && $this->logged_in ) {
+					$post_status = get_post_status( $post_id ) ;
+
+					$post_type_object = get_post_type_object( $post_type );
+				?>
+					<li>
+						<label for="wpuf-post-status">
+							<?php echo wpuf_get_option( 'status_label' ); ?>
+						</label>
+
+						<select name="wpuf_post_status"  id="wpuf-post-status">
+							<option <?php selected( $post_status, 'draft' ); ?> value="draft" > <?php _e('Draft'); ?></option>
+							<option <?php selected( $post_status, 'pending' ); ?> value="pending" > <?php _e('Pending'); ?></option>
+							<?php
+							if( user_can( $post_author, $post_type_object->cap->publish_posts ) ) { 
+							?>
+								<option <?php selected( $post_status, 'publish' ); ?> value="publish" > <?php _e('Publish'); ?></option>
+								<option <?php selected( $post_status, 'private' ); ?> value="private" > <?php _e('Private'); ?></option>
+							<?php
+							}
+							?>
+						</select>
+						<div class="clear"></div>
+						<?php
+						$helptxt = stripslashes( wpuf_get_option( 'status_help' ) );
+						if ($helptxt) 
+							echo '<p class="description">' . $helptxt . '</p>';	
+						?>
+					</li>
+				<?php
+				}
+
+				$this->publish_date_form( $post );
+				$this->expiry_date_form( $post );
+
+				wpuf_build_custom_field_form( 'bottom', true, $post_id ); 
+
+				do_action( 'wpuf_post_form', 'edit', 'submit', $post_type, $post ); 
+				?>
+
+				<li id="wpuf-submit-li">
+					<div id="wpuf-info-msg">&nbsp;</div>
+					<input class="wpuf-submit" type="submit" name="wpuf_edit_post_submit" value="<?php echo esc_attr( wpuf_get_option( 'update_label' ) ); ?>">
+					<input type="hidden" name="post_id" value="<?php echo $post_id; ?>">
+					<input type="hidden" name="wpuf_close" value="<?php echo $close ?>" />
+					<input type="hidden" name="wpuf_redirect" value="<?php echo $redirect ?>" />
+					<input type="hidden" name="wpuf_referer" value="<?php echo $this->wpuf_referer ?>" />
+				</li>
+
+				<?php do_action( 'wpuf_post_form', 'edit', 'bottom', $post_type, $post ); ?>
+			</ul>
+		</form>
 <?php
 	}
 
 	/**
 	 * Prints the post publish date on form
 	 *
-	 * @return bool|string
+	 * @author Andrew Bruin (professor99)
+	 * @since 1.1-fork-2RRR-3.0 
 	 */
 	function publish_date_form( $curpost ) {
 		$enable_date = wpuf_get_option( 'enable_post_date' );
@@ -716,10 +730,11 @@ class WPUF_Edit_Post {
 	}
 
 	/**
-	* Prints post expiration date on the form
-	*
-	* @return bool|string
-	*/
+	 * Prints post expiration date on the form
+	 *
+	 * @author Andrew Bruin (professor99)
+	 * @since 1.1-fork-2RRR-3.0 
+	 */
 	function expiry_date_form( $curpost ) {
 		$post_expiry = wpuf_get_option( 'enable_post_expiry' );
 
@@ -780,14 +795,18 @@ class WPUF_Edit_Post {
 	}
 
 	/**
-	* Validate and insert post message.
-	* Called by AjaxForm on form submit.
-	* Returns XML message via AjaxForm.
-	*
-	* @global WP_User $userdata
-	*/
+	 * Validate and insert post message.
+	 *
+	 * Called by AjaxForm on form submit.
+	 * Returns XML message via AjaxForm.
+	 *
+	 * @author Tareq Hasan
+	 * @global WP_User $userdata
+	 * @global WPUF_Cat $wpuf_cat
+	 */
 	function submit_post() {
 		global $userdata;
+		global $wpuf_cat;
 
 		//$message = '<div>REQUEST=' . print_r($_REQUEST, true) . '<br>POST=' . print_r($_POST,true) . '<br>$_SERVER='. print_r($_SERVER,true) . '<br>$userdata=' . print_r($userdata,true) . '</div>' ;
  		//echo '<root><success>false></success><message>' . <htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>'; 
@@ -804,7 +823,7 @@ class WPUF_Edit_Post {
 
 		if ( !wp_verify_nonce( $_REQUEST['_wpnonce'], 'wpuf-edit-post' . $post_id) ) {
 			$message = wpuf_error_msg( __( 'Cheating?' ) );
-			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
+			echo '<root><success>false</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message></root>';
 			exit;
 		}
 
@@ -818,20 +837,8 @@ class WPUF_Edit_Post {
 		}
 
 		//validate categories
-
-		if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
-			$cat_type = wpuf_get_option( 'cat_type' );
-			if ( !isset( $_POST['category'] ) ) {
-				$errors[] = __( 'Please choose a category', 'wpuf' );
-			} else if ( $cat_type == 'normal' && $_POST['category'][0] == '-1' ) {
-				$errors[] = __( 'Please choose a category', 'wpuf' );
-			} else {
-				if ( count( $_POST['category'] ) < 1 ) {
-					$errors[] = __( 'Please choose a category', 'wpuf' );
-				}
-			}
-		}
-
+		$post_category = $wpuf_cat->validate( $_POST['category'], &$errors );
+		
 		//validate post content
 		if ( empty( $content ) ) {
 			$errors[] = __( 'Empty post content', 'wpuf' );
@@ -915,7 +922,7 @@ class WPUF_Edit_Post {
 		//if not any errors, proceed
 		if ( $errors ) {
 			$message = wpuf_error_msgs( $errors );
-			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
+			echo '<root><success>false</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message></root>';
 			exit;
 		}
 
@@ -931,26 +938,30 @@ class WPUF_Edit_Post {
 			$tags = explode( ',', $tags );
 		}
 
-		//Set category to default if users aren't allowed to choose category
-		if ( wpuf_get_option( 'allow_cats' ) == 'on' ) {
-			$post_category = $_POST['category'];
-		} else {
-			$post_category = array(get_option( 'wpuf_default_cat' ));
-		}
-
 		$post_author = $userdata->ID;
 
 		$post_type_object = get_post_type_object( $post_type );
 
 		//Set post status
-		if ( wpuf_get_option( 'allow_status') == 'on' && $this->logged_in && isset($_POST['wpuf_post_status']) ) {
+		if ( wpuf_get_option( 'allow_status' ) == 'on' && isset( $_POST['wpuf_post_status'] ) ) {
 			$post_stat = $_POST['wpuf_post_status'];
 
 			// Prevent un-authorised publishment 
 			if ( $post_stat != 'draft' && !user_can( $post_author, $post_type_object->cap->publish_posts ) ) 
 				$post_stat = 'pending';
 		} else {
-			$post_stat = $post->post_status;
+			//Reset post status according to post_status option
+			
+			$post_stat = wpuf_get_option( 'post_status' );
+			
+			if ( $post_stat == 'default' ) {
+				if( user_can( $post_author, $post_type_object->cap->publish_posts ) ) { 
+					$post_stat = 'publish';
+				}
+				else {
+					$post_stat = 'pending';
+				}
+			}
 		}
 
 		$post_update = array(
@@ -985,7 +996,7 @@ class WPUF_Edit_Post {
 		//if update post ok, proceed
 		if (is_wp_error($post_id)) {
 			$message = wpuf_error_msg( __( 'Post update failed. ', 'wpuf' ) . $post_id->get_error_message());
-			echo '<root><success>false</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message></root>';
+			echo '<root><success>false</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message></root>';
 			exit;
 		}
 
@@ -1017,31 +1028,36 @@ class WPUF_Edit_Post {
 		//plugin API to extend the functionality
 		do_action( 'wpuf_edit_post_after_update', $post_id );
 
-		//Set after edit redirect
-		switch ($_POST['wpuf_redirect']) {
+		//Set after post redirect
+		
+		$redirect_url = '';
+
+		switch ( $_POST['wpuf_redirect'] ) {
 			case "auto":
-				if ($_POST['wpuf_close'] == true) {
+				if ( $_POST['wpuf_close'] == true )
 					$redirect_url = $_POST['wpuf_referer'];
-				} else {
-					$redirect_url = $_POST['wpuf_self'];
-				}
 				break;
-			case "current":
-				$redirect_url = $_POST['wpuf_self'];
+			case "none":
+				break;
+			case "new":
+				$redirect_url = get_permalink( $post_id );
 				break;
 			case "last":
 				$redirect_url = $_POST['wpuf_referer'];
 				break;
 			default:
-				$redirect_url = "";
+				if ( $_POST['wpuf_redirect'] ) {
+					//Redirect to url given by wpuf_redirect
+					$redirect_url = add_query_arg( 'wpuf_referer', $_POST['wpuf_referer'], $redirect_url );
+				} 		
 		}
-		
-		//Use this filter if you want to change the return address on update
-		$redirect_url = apply_filters( 'wpuf_post_redirect', 'edit', 'update', $redirect_url, $post_id );
+
+		$redirect_url = apply_filters( 'wpuf_post_redirect', 'add', 'insert', $redirect_url, $post_id );
+		$redirect_url = htmlspecialchars( $redirect_url, ENT_QUOTES, "UTF-8" );
 
 		$message = '<div class="wpuf-success">' . __('Post updated succesfully', 'wpuf') . '</div>';
 		
-		echo '<root><success>true</success><message>' . htmlspecialchars($message, ENT_QUOTES, "UTF-8") . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
+		echo '<root><success>true</success><message>' . htmlspecialchars( $message, ENT_QUOTES, "UTF-8" ) . '</message><post_id>' . $post_id . '</post_id><redirect_url>' . $redirect_url . '</redirect_url></root>';
 		exit;
 	}
 

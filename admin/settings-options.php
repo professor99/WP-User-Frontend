@@ -4,11 +4,17 @@
  *
  *@author Tareq Hasan 
  *@package WP User Frontend
- *@version 1.1.0-fork-2RRR-4.3
+ *@version 1.1.0-fork-2RRR-4.4
  */
 
 /*
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.4 professor99 =
+* Added show attachment thumbnails option.
+* Added cat_ajax_childless option
+* Updated language constructs
+* Added profile_page_id option
 
 = 1.1.0-fork-2RRR-4.3 professor99 =
 * Added private post status.
@@ -142,7 +148,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'title_label',
                 'label' => __( 'Post title label', 'wpuf' ),
-                'default' => 'Title'
+                'default' => __( 'Title', 'wpuf' )
             ),
             array(
                 'name' => 'title_help',
@@ -151,8 +157,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'slug_label',
                 'label' => __( 'Slug label', 'wpuf' ),
-                'desc' => __( 'Leave blank for default', 'wpuf' ),
-                'default' => 'Slug'
+                'default' =>  __( 'Slug', 'wpuf' )
             ),
             array(
                 'name' => 'slug_help',
@@ -162,25 +167,25 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'format_label',
                 'label' => __( 'Post Format label', 'wpuf' ),
-                'default' => 'Post Format'
+                'default' => __( 'Post Format', 'wpuf' )
             ),
             array(
                 'name' => 'format_help',
-                'label' => __( 'Post Format help text', 'wpuf' ),
+                'label' => __( 'Post Format help text', 'wpuf' )
             ),
             array(
                 'name' => 'cat_label',
                 'label' => __( 'Post category label', 'wpuf' ),
-                'default' => 'Category'
+                'default' => __( 'Category', 'wpuf' )
             ),
             array(
                 'name' => 'cat_help',
-                'label' => __( 'Post category help text', 'wpuf' ),
+                'label' => __( 'Post category help text', 'wpuf' )
             ),
            array(
                 'name' => 'status_label',
                 'label' => __( 'Post Status label', 'wpuf' ),
-                'default' => 'Post Status'
+                'default' => __( 'Post Status', 'wpuf' )
             ),
             array(
                 'name' => 'status_help',
@@ -189,7 +194,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'desc_label',
                 'label' => __( 'Post description label', 'wpuf' ),
-                'default' => 'Description'
+                'default' => __( 'Description', 'wpuf' )
             ),
             array(
                 'name' => 'desc_help',
@@ -198,7 +203,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'excerpt_label',
                 'label' => __( 'Excerpt tag label', 'wpuf' ),
-                'default' => 'Excerpt'
+                'default' => __( 'Excerpt', 'wpuf' )
             ),
             array(
                 'name' => 'excerpt_help',
@@ -207,7 +212,7 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'tag_label',
                 'label' => __( 'Post tag label', 'wpuf' ),
-                'default' => 'Tags'
+                'default' => __( 'Tags', 'wpuf' )
             ),
             array(
                 'name' => 'tag_help',
@@ -216,53 +221,53 @@ function wpuf_settings_fields() {
             array(
                 'name' => 'submit_label',
                 'label' => __( 'Post submit button label', 'wpuf' ),
-                'default' => 'Submit Post'
+                'default' => __( 'Submit Post', 'wpuf' )
             ),
             array(
                 'name' => 'delete_label',
                 'label' => __( 'Delete button label', 'wpuf' ),
-                'default' => 'Delete Post'
+                'default' => __( 'Delete Post', 'wpuf' )
             ),
             array(
                 'name' => 'close_label',
                 'label' => __( 'Close button label', 'wpuf' ),
-                'default' => 'Close'
+                'default' => __( 'Close', 'wpuf' )
             ),
             array(
                 'name' => 'update_label',
                 'label' => __( 'Post update button label', 'wpuf' ),
-                'default' => 'Update Post'
+                'default' => __( 'Update Post', 'wpuf' )
             ),
             array(
                 'name' => 'updating_label',
                 'label' => __( 'Post updating button label', 'wpuf' ),
                 'desc' => __( 'the text will be used when the submit button is pressed', 'wpuf' ),
-                'default' => 'Please wait...'
+                'default' => __( 'Please wait...', 'wpuf' )
             ),
             array(
                 'name' => 'ft_image_label',
                 'label' => __( 'Featured image label', 'wpuf' ),
-                'default' => 'Featured Image'
+                'default' => __( 'Featured Image', 'wpuf' )
             ),
             array(
                 'name' => 'ft_image_btn_label',
                 'label' => __( 'Featured Button image label', 'wpuf' ),
-                'default' => 'Upload Image'
+                'default' => __( 'Upload Image', 'wpuf' )
             ),
             array(
                 'name' => 'attachment_label',
                 'label' => __( 'Attachment Label', 'wpuf' ),
-                'default' => 'Attachments'
+                'default' => __( 'Attachments', 'wpuf' )
             ),
             array(
                 'name' => 'attachment_btn_label',
                 'label' => __( 'Attachment upload button', 'wpuf' ),
-                'default' => 'Add attachment'
+                'default' => __( 'Add attachment', 'wpuf' )
             ),
             array(
                 'name' => 'login_label',
                 'label' => __( 'Login label', 'wpuf' ),
-                'default' => 'This page is restricted. Please %s to view this page.'
+                'default' => __( 'This page is restricted. Please %s to view this page.', 'wpuf' )
             ),
         ) ),
         'wpuf_frontend_posting' => apply_filters( 'wpuf_options_frontend', array(
@@ -273,11 +278,11 @@ function wpuf_settings_fields() {
                 'type' => 'select',
                 'default' => 'default',
                 'options' => array(
-                    'default' => 'Default',		
-                    'draft' => 'Draft',
-                    'pending' => 'Pending',
-                    'publish' => 'Publish',
-                    'private' => 'Private'
+                    'default' => __( 'Default', 'wpuf' ),
+                    'draft' => __( 'Draft', 'wpuf' ),
+                    'pending' => __( 'Pending', 'wpuf' ),
+                    'publish' => __( 'Publish', 'wpuf' ),
+                    'private' => __( 'Private', 'wpuf' )
                 )
             ),
             array(
@@ -335,6 +340,13 @@ function wpuf_settings_fields() {
                     'ajax' => __( 'Ajaxified', 'wpuf' ),
                     'checkbox' => __( 'Checkbox', 'wpuf' )
                 )
+            ),
+            array(
+                'name' => 'cat_ajax_childless',
+                'label' => __( 'Category childless', 'wpuf' ),
+                'desc' => __( 'Selected category must be childless (Ajaxified)', 'wpuf' ),
+                'type' => 'checkbox',
+                'default' => 'on'
             ),
             array(
                 'name' => 'enable_featured_image',
@@ -551,6 +563,13 @@ function wpuf_settings_fields() {
                 'options' => wpuf_get_pages()
             ),
             array(
+                'name' => 'profile_page_id',
+                'label' => __( 'Profile Page', 'wpuf' ),
+                'desc' => __( 'Select the page where [wpuf_editprofile] is located', 'wpuf' ),
+                'type' => 'select',
+                'options' => wpuf_get_pages()
+            ),
+            array(
                 'name' => 'admin_access',
                 'label' => __( 'Admin area access', 'wpuf' ),
                 'desc' => __( 'Allow you to block specific user role to WordPress admin area.', 'wpuf' ),
@@ -575,6 +594,13 @@ function wpuf_settings_fields() {
                 'name' => 'att_show_front',
                 'label' => __( 'Show attachments in the post', 'wpuf' ),
                 'desc' => __( 'If you want to show the uploaded attachments in the post', 'wpuf' ),
+                'type' => 'checkbox',
+                'default' => 'on'
+            ),
+            array(
+                'name' => 'att_show_front_thumb',
+                'label' => __( 'Show attachment thumbnails in the post', 'wpuf' ),
+                'desc' => __( 'If you want to show the uploaded attachment thumbnails in the post', 'wpuf' ),
                 'type' => 'checkbox',
                 'default' => 'on'
             ),
@@ -625,30 +651,30 @@ function wpuf_settings_fields() {
                 'type' => 'select',
                 'default' => 'USD',
                 'options' => array(
-                    'AUD' => 'Australian Dollar',
-                    'CAD' => 'Canadian Dollar',
-                    'EUR' => 'Euro',
-                    'GBP' => 'British Pound',
-                    'JPY' => 'Japanese Yen',
-                    'USD' => 'U.S. Dollar',
-                    'NZD' => 'New Zealand Dollar',
-                    'CHF' => 'Swiss Franc',
-                    'HKD' => 'Hong Kong Dollar',
-                    'SGD' => 'Singapore Dollar',
-                    'SEK' => 'Swedish Krona',
-                    'DKK' => 'Danish Krone',
-                    'PLN' => 'Polish Zloty',
-                    'NOK' => 'Norwegian Krone',
-                    'HUF' => 'Hungarian Forint',
-                    'CZK' => 'Czech Koruna',
-                    'ILS' => 'Israeli New Shekel',
-                    'MXN' => 'Mexican Peso',
-                    'BRL' => 'Brazilian Real',
-                    'MYR' => 'Malaysian Ringgit',
-                    'PHP' => 'Philippine Peso',
-                    'TWD' => 'New Taiwan Dollar',
-                    'THB' => 'Thai Baht',
-                    'TRY' => 'Turkish Lira'
+                    'AUD' => __( 'Australian Dollar', 'wpuf' ),
+                    'CAD' => __( 'Canadian Dollar', 'wpuf' ),
+                    'EUR' => __( 'Euro', 'wpuf' ),
+                    'GBP' => __( 'British Pound', 'wpuf' ),
+                    'JPY' => __( 'Japanese Yen', 'wpuf' ),
+                    'USD' => __( 'U.S. Dollar', 'wpuf' ),
+                    'NZD' => __( 'New Zealand Dollar', 'wpuf' ),
+                    'CHF' => __( 'Swiss Franc', 'wpuf' ),
+                    'HKD' => __( 'Hong Kong Dollar', 'wpuf' ),
+                    'SGD' => __( 'Singapore Dollar', 'wpuf' ),
+                    'SEK' => __( 'Swedish Krona', 'wpuf' ),
+                    'DKK' => __( 'Danish Krone', 'wpuf' ),
+                    'PLN' => __( 'Polish Zloty', 'wpuf' ),
+                    'NOK' => __( 'Norwegian Krone', 'wpuf' ),
+                    'HUF' => __( 'Hungarian Forint', 'wpuf' ),
+                    'CZK' => __( 'Czech Koruna', 'wpuf' ),
+                    'ILS' => __( 'Israeli New Shekel', 'wpuf' ),
+                    'MXN' => __( 'Mexican Peso', 'wpuf' ),
+                    'BRL' => __( 'Brazilian Real', 'wpuf' ),
+                    'MYR' => __( 'Malaysian Ringgit', 'wpuf' ),
+                    'PHP' => __( 'Philippine Peso', 'wpuf' ),
+                    'TWD' => __( 'New Taiwan Dollar', 'wpuf' ),
+                    'THB' => __( 'Thai Baht', 'wpuf' ),
+                    'TRY' => __( 'Turkish Lira', 'wpuf' )
                 )
             ),
             array(
@@ -704,7 +730,7 @@ function wpuf_settings_fields() {
                 'name' => 'support',
                 'label' => __( 'Need Help?', 'wpuf' ),
                 'type' => 'html',
-                'desc' => '
+                'desc' => __( '
                         <ol>
                             <li>
                                 <strong>Check the FAQ and the documentation</strong>
@@ -726,7 +752,7 @@ function wpuf_settings_fields() {
                             <li>
                                 I spent countless hours to build this plugin, <strong><a target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=tareq%40wedevs%2ecom&lc=US&item_name=WP%20User%20Frontend&item_number=Tareq%27s%20Planet&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted">support</a></strong> me if you like this plugin and <a href="http://wordpress.org/extend/plugins/wp-user-frontend/">rate</a> the plugin.
                             </li>
-                        </ol>'
+                        </ol>', 'wpuf' )
             )
         ) ),
     );

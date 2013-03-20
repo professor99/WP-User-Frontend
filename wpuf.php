@@ -5,13 +5,22 @@ Plugin Name: WP User Frontend
 Plugin URI: http://tareq.wedevs.com/2011/01/new-plugin-wordpress-user-frontend/
 Description: Post, Edit, Delete posts and edit profile without coming to backend
 Author: Tareq Hasan
-Version: 1.1.0-fork-2RRR-4.3
+Version: 1.1.0-fork-2RRR-4.4
 Author URI: http://tareq.weDevs.com
 Contributors: tareq1988,professor99
 
 Modified by Andy Bruin (professor99) of KnockThemDeadProductions for 2RRR. 
 
 == Changelog ==
+
+= 1.1.0-fork-2RRR-4.4 professor99 =
+* Changed posting_msg to updating_msg
+* wpuf-ajax.php replaced by wpuf-cat.php
+* Changed version to 1.1.0-fork-2RRR-4.4 
+* Removed enqueuing of wpuf.js
+* Localizing of wpuf javascript object moved to wpuf_post_localize()
+* Added language constructs
+* Load only wpuf-global.css
 
 = 1.1.0-fork-2RRR-4.3 professor99 =
 * Bugfix: Changed version to 1.1.0-fork-2RRR-4.3 
@@ -62,7 +71,7 @@ require_once 'wpuf-add-post.php';
 require_once 'wpuf-edit-post.php';
 require_once 'wpuf-editprofile.php';
 require_once 'wpuf-edit-user.php';
-require_once 'wpuf-ajax.php';
+require_once 'wpuf-cat.php';
 
 require_once 'wpuf-subscription.php';
 require_once 'wpuf-payment.php';
@@ -74,6 +83,13 @@ require_once 'lib/gateway/paypal.php';
 //This forces tinymce to "Visual" mode on start.
 add_filter( 'wp_default_editor', create_function('', 'return "tinymce";') );
 
+/**
+ * WPUF Main Class
+ * 
+ * @author Tareq Hasan
+ * @package WP User Frontend
+ * @subpackage WPUF_Main
+ */
 class WPUF_Main {
     var $version = '';
 
@@ -93,6 +109,7 @@ class WPUF_Main {
     /**
      * Create tables on plugin activation
      *
+     * @author Tareq Hasan
      * @global object $wpdb
      */
     function install() {
@@ -152,18 +169,20 @@ class WPUF_Main {
     /**
      * Get plugin header data
      *
-     * @return array
+     * @author Andrew Bruin (professor99)
      * @since 1.1-fork-2RRR-4.0
+     *
+     * @return array
      */
     function get_plugin_data() {
         $default_headers = array(
-            'Name' => 'Plugin Name',
-            'PluginURI' => 'Plugin URI',
-            'Version' => 'Version',
-            'Description' => 'Description',
-            'Author' => 'Author',
-            'AuthorURI' => 'Author URI',
-			'Contributors' => 'Contributors'
+            'Name' => __('Plugin Name', 'wpuf' ),
+            'PluginURI' => __('Plugin URI', 'wpuf' ),
+            'Version' => __('Version'),
+            'Description' => __('Description', 'wpuf' ),
+            'Author' => __('Author', 'wpuf' ),
+            'AuthorURI' => __('Author URI', 'wpuf' ),
+			'Contributors' => __('Contributors', 'wpuf' )
         );
 
         return get_file_data( __FILE__, $default_headers, 'plugin' );
@@ -172,8 +191,10 @@ class WPUF_Main {
     /**
      * Get plugin version
      *
-     * @return string
+     * @author Andrew Bruin (professor99)
      * @since 1.1-fork-2RRR-4.0
+     *
+     * @return string
      */
     function get_plugin_version() {
         $plugin_data = $this->get_plugin_data();
@@ -181,9 +202,9 @@ class WPUF_Main {
     }
 	
     /**
-     * Enqueues Styles and Scripts when the shortcodes are used only
+     * Enqueues Styles and Scripts
      *
-     * @uses has_shortcode()
+     * @author Tareq Hasan
      * @since 0.2
      */
     function enqueue_scripts() {
@@ -196,30 +217,13 @@ class WPUF_Main {
 
         require_once ABSPATH . '/wp-admin/includes/template.php';
 
-        wp_enqueue_style( 'wpuf', $path . '/css/wpuf.css' );
-
-        wp_enqueue_script( 'wpuf', $path . '/js/wpuf.js', array('jquery') );
-
-        $submit_msg = wpuf_get_option( 'submit_label' );
-        $update_msg = wpuf_get_option( 'update_label' );
-        $posting_msg = wpuf_get_option( 'updating_label' );
-        $delete_msg = wpuf_get_option( 'delete_label' );
-
-        wp_localize_script( 'wpuf', 'wpuf', array(
-            'ajaxurl' => admin_url( 'admin-ajax.php' ),
-            'submit_msg' => $submit_msg,
-            'update_msg' => $update_msg,
-            'postingMsg' => $posting_msg,
-            'deleteMsg' => $delete_msg,
-            'confirmMsg' => __( 'Are you sure?', 'wpuf' ),
-			'delete_confirm_msg' => __('Are you sure to delete this post?', 'wpuf' ),
-            'nonce' => wp_create_nonce( 'wpuf_nonce' ),
-        ) );
+        wp_enqueue_style( 'wpuf-global', $path . '/css/wpuf-global.css' );
     }
 
     /**
      * Block user access to admin panel for specific roles
      *
+     * @author Tareq Hasan
      * @global string $pagenow
      */
     function block_admin_access() {
@@ -236,8 +240,8 @@ class WPUF_Main {
     /**
      * Load the translation file for current language.
      *
-     * @since version 0.7
      * @author Tareq Hasan
+     * @since version 0.7
      */
     function load_textdomain() {
         $locale = apply_filters( 'wpuf_locale', get_locale() );
@@ -251,7 +255,9 @@ class WPUF_Main {
     /**
      * The main logging function
      *
+     * @author Tareq Hasan
      * @uses error_log
+     *
      * @param string $type type of the error. e.g: debug, error, info
      * @param string $msg
      */

@@ -3,17 +3,51 @@
 /**
  * WP User Frontend payment gateway handler
  *
+ * @author Tareq Hasan
  * @since 0.8
  * @package WP User Frontend
+ * @version 1.1-fork-2RRR-4.4
+ */
+
+/*
+== Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 = 
+* Suppress "edit_post_link" on this page
+* Enqueue wpuf and custom css
+* Added wpuf div
+*/
+
+/**
+ * Payment Class
+ * 
+ * @author Tareq Hasan
+ * @package WP User Frontend
+ * @subpackage WPUF_Payment
  */
 class WPUF_Payment {
-
     function __construct() {
         add_action( 'init', array($this, 'send_to_gateway') );
         add_action( 'wpuf_payment_received', array($this, 'payment_notify_admin') );
 
         add_filter( 'the_content', array($this, 'payment_page') );
     }
+
+    /**
+     * Enqueue scripts and styles
+     *
+     * @author Andrew Bruin (professor99)
+     * @since 1.1-fork-2RRR-4.4
+     */
+    function enqueue() {
+        $path = plugins_url( 'wp-user-frontend' );
+
+        //Add wpuf css
+        wp_enqueue_style( 'wpuf', $path . '/css/wpuf.css' );
+
+        //Add custom css
+        wp_add_inline_style( 'wpuf', wpuf_get_option( 'custom_css' ) );
+    }	
 
     public static function get_payment_gateways() {
 
@@ -51,8 +85,13 @@ class WPUF_Payment {
         global $post;
 
         $pay_page = intval( wpuf_get_option( 'payment_page' ) );
-
+		
         if ( $post->ID == $pay_page && isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'wpuf_pay' ) {
+            //Suppress "edit_post_link" on this page
+            add_filter( 'edit_post_link', 'wpuf_suppress_edit_post_link', 10, 2 ); 
+
+            //Enqueue scripts and styles
+            $this->enqueue();
 
             if ( !is_user_logged_in() ) {
                 return __( 'You are not logged in', 'wpuf' );
@@ -65,7 +104,9 @@ class WPUF_Payment {
             $gateways = $this->get_active_gateways();
 
             ob_start();
-            ?>
+?>
+            <div id="wpuf">
+
             <?php if ( count( $gateways ) ) { ?>
                 <form id="wpuf-payment-gateway" action="<?php echo $_SERVER["REQUEST_URI"]; ?>" method="POST">
                     <?php wp_nonce_field( 'wpuf_payment_gateway' ) ?>
@@ -100,7 +141,8 @@ class WPUF_Payment {
                 <?php _e( 'No Payment gateway found', 'wpuf' ); ?>
             <?php } ?>
 
-            <?php
+            </div>
+<?php
             return ob_get_clean();
         }
 

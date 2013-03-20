@@ -5,11 +5,18 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-4.3 
+ * @version 1.1-fork-2RRR-4.4 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 =
+* Restored showing of attachment thumbnails in posts as option
+* Most category functions moved to wpuf-cats.php
+* Removed permalink nag
+* Added wpuf_post_localize() function
+* Removed wpuf_header_css. Now done locally.
 
 = 1.1-fork-2RRR-4.3 professor99 =
 * Added 'private' and 'unknown' status to wpuf_show_post_status()
@@ -44,6 +51,7 @@
  *
  * This is needed for redirecting to post when a new post has made
  *
+ * @author Tareq Hasan
  * @since 0.8
  */
 function wpuf_buffer_start() {
@@ -53,11 +61,13 @@ function wpuf_buffer_start() {
 add_action( 'init', 'wpuf_buffer_start' );
 
 /**
+ * Redirect to login page
+ *
  * If the user isn't logged in, redirect
  * to the login page
  *
- * @since version 0.1
  * @author Tareq Hasan
+ * @since version 0.1
  */
 function wpuf_auth_redirect_login() {
     $user = wp_get_current_user();
@@ -72,9 +82,10 @@ function wpuf_auth_redirect_login() {
 /**
  * Format the post status for user dashboard
  *
- * @param string $status
- * @since version 0.1
  * @author Tareq Hasan
+ * @since version 0.1
+ *
+ * @param string $status
  */
 function wpuf_show_post_status( $status ) {
 
@@ -104,6 +115,8 @@ function wpuf_show_post_status( $status ) {
 /**
  * Format error message
  *
+ * @author Tareq Hasan
+ *
  * @param array $error_msg
  * @return string
  */
@@ -113,6 +126,9 @@ function wpuf_error_msg( $error_msg ) {
 
 /**
  * Format error messages
+ *
+ * @author Andrew Bruin (professor99) 
+ * @since 1.1-fork-2RRR-3.0
  *
  * @param array $error_msgs
  * @return string
@@ -127,7 +143,16 @@ function wpuf_error_msgs( $error_msgs ) {
     return $msg_string;
 }
 
-// for the price field to make only numbers, periods, and commas
+/**
+ * Clean tags
+ *
+ * for the price field to make only numbers, periods, and commas
+ *
+ * @author Tareq Hasan
+ *
+ * @param array $error_msg
+ * @return string
+ */
 function wpuf_clean_tags( $string ) {
     $string = preg_replace( '/\s*,\s*/', ',', rtrim( trim( $string ), ' ,' ) );
     return $string;
@@ -135,6 +160,8 @@ function wpuf_clean_tags( $string ) {
 
 /**
  * Validates any integer variable and sanitize
+ *
+ * @author Tareq Hasan
  *
  * @param int $int
  * @return intger
@@ -146,6 +173,8 @@ function wpuf_is_valid_int( $int ) {
 
 /**
  * Notify the admin for new post
+ *
+ * @author Tareq Hasan
  *
  * @param object $userdata
  * @param int $post_id
@@ -176,6 +205,8 @@ function wpuf_notify_post_mail( $user, $post_id ) {
 /**
  * Adds/Removes mime types to wordpress
  *
+ * @author Tareq Hasan
+ *
  * @param array $mime original mime types
  * @return array modified mime types
  */
@@ -195,7 +226,9 @@ add_filter( 'upload_mimes', 'wpuf_mime' );
 /**
  * Generic function to upload a file
  *
+ * @author Tareq Hasan
  * @since 0.8
+ *
  * @param string $field_name file input field name
  * @return bool|int attachment id on success, bool false instead
  */
@@ -228,6 +261,8 @@ function wpuf_upload_file( $upload_data ) {
 
 /**
  * Get the attachments of a post
+ *
+ * @author Tareq Hasan
  *
  * @param int $post_id
  * @return array attachment list
@@ -274,8 +309,10 @@ function wpfu_get_attachments( $post_id ) {
 /**
  * Remove the mdedia upload tabs from subscribers
  *
- * @package WP User Frontend
  * @author Tareq Hasan
+ *
+ * @param array $list
+ * @return array
  */
 function wpuf_unset_media_tab( $list ) {
     if ( !current_user_can( 'edit_posts' ) ) {
@@ -291,6 +328,8 @@ add_filter( 'media_upload_tabs', 'wpuf_unset_media_tab' );
 /**
  * Get the registered post types
  *
+ * @author Tareq Hasan
+ *
  * @return array
  */
 function wpuf_get_post_types() {
@@ -305,6 +344,13 @@ function wpuf_get_post_types() {
     return $post_types;
 }
 
+/**
+ * Get categories
+ *
+ * @author Tareq Hasan
+ *
+ * @return array
+ */
 function wpuf_get_cats() {
     $cats = get_categories( array('hide_empty' => false) );
 
@@ -321,6 +367,8 @@ function wpuf_get_cats() {
 
 /**
  * Get lists of users from database
+ *
+ * @author Tareq Hasan
  *
  * @return array
  */
@@ -346,6 +394,8 @@ function wpuf_list_users() {
 /**
  * Find the string that starts with defined word
  *
+ * @author Tareq Hasan
+ *
  * @param string $string
  * @param string $starts
  * @return boolean
@@ -364,7 +414,9 @@ function wpuf_starts_with( $string, $starts ) {
 /**
  * check the current post for the existence of a short code
  *
+ * @author Tareq Hasan
  * @link http://wp.tutsplus.com/articles/quick-tip-improving-shortcodes-with-the-has_shortcode-function/
+ *
  * @param string $shortcode
  * @return boolean
  */
@@ -401,6 +453,8 @@ function has_shortcode( $shortcode = '', $post_id = false ) {
 /**
  * Retrieve or display list of posts as a dropdown (select list).
  *
+ * @author Tareq Hasan
+ *
  * @return string HTML content, if not displaying.
  */
 function wpuf_get_pages() {
@@ -419,6 +473,8 @@ function wpuf_get_pages() {
 
 /**
  * Get all the payment gateways
+ *
+ * @author Tareq Hasan
  *
  * @return array
  */
@@ -440,7 +496,9 @@ function wpuf_get_gateways( $context = 'admin' ) {
 /**
  * Edit post link for frontend
  *
+ * @author Tareq Hasan
  * @since 0.7
+ *
  * @param string $url url of the original post edit link
  * @param int $post_id
  * @return string url of the current edit post page
@@ -468,10 +526,11 @@ add_filter( 'get_edit_post_link', 'wpuf_edit_post_link', 10, 2 );
 /**
  * Shows the custom field data and attachments to the post
  *
+ * @author Tareq Hasan
  * @since 0.7
- *
  * @global object $wpdb
  * @global object $post
+ *
  * @param string $content
  * @return string
  */
@@ -482,7 +541,8 @@ function wpuf_show_meta_front( $content ) {
     $enabled = wpuf_get_option( 'enable_custom_field' );
     $show_custom = wpuf_get_option( 'cf_show_front' );
     $show_attachment = wpuf_get_option( 'att_show_front' );
-
+    $show_attachment_thumb = wpuf_get_option( 'att_show_front_thumb' );
+	
     if ( $enabled == 'on' && $show_custom == 'on' ) {
         $extra = '';
         $fields = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}wpuf_customfields ORDER BY `region` DESC", OBJECT );
@@ -510,7 +570,17 @@ function wpuf_show_meta_front( $content ) {
             $attach .= '<ul class="wpuf-attachments">';
 
             foreach ($attachments as $file) {
-                $attach .= sprintf( '<li><a href="%s" title="%s">%s</a></li>', $file['url'], esc_attr( $file['title'] ), $file['title'] );
+                $title = esc_attr( $file['title'] );
+                $url = esc_url( $file['url'] );
+
+                //If show_attachment_thumb option set show thumbnail of image or mime icon. Else show the link.
+                if ( $show_attachment_thumb == 'on' ) {
+                    $thumb = wp_get_attachment_image_src( $file['id'], 'thumbnail', true );
+					
+                    $attach .= sprintf( '<li><a href="%s"><img src="%s" alt="%s" title="%s" />%s</a></li>', $url, $thumb[0], $title, $title, $title );
+                } else {
+                    $attach .= sprintf( '<li><a href="%s" title="%s">%s</a></li>', $url, $title, $title );
+                }
             }
 
             $attach .= '</ul>';
@@ -529,6 +599,7 @@ add_filter( 'the_content', 'wpuf_show_meta_front' );
 /**
  * Check if the file is a image
  *
+ * @author Tareq Hasan
  * @since 0.7
  *
  * @param string $file url of the file to check
@@ -547,85 +618,6 @@ function wpuf_is_file_image( $file, $mime ) {
     return false;
 }
 
-/**
- * Category checklist walker
- *
- * @since 0.8
- */
-class WPUF_Walker_Category_Checklist extends Walker {
-
-    var $tree_type = 'category';
-    var $db_fields = array('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
-
-    function start_lvl( &$output, $depth, $args ) {
-        $indent = str_repeat( "\t", $depth );
-        $output .= "$indent<ul class='children'>\n";
-    }
-
-    function end_lvl( &$output, $depth, $args ) {
-        $indent = str_repeat( "\t", $depth );
-        $output .= "$indent</ul>\n";
-    }
-
-    function start_el( &$output, $category, $depth, $args ) {
-        extract( $args );
-        if ( empty( $taxonomy ) )
-            $taxonomy = 'category';
-
-        if ( $taxonomy == 'category' )
-            $name = 'category';
-        else
-            $name = 'tax_input[' . $taxonomy . ']';
-
-        $class = in_array( $category->term_id, $popular_cats ) ? ' class="popular-category"' : '';
-        $output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="' . $name . '[]" id="in-' . $taxonomy . '-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . disabled( empty( $args['disabled'] ), false, false ) . ' /> ' . esc_html( apply_filters( 'the_category', $category->name ) ) . '</label>';
-    }
-
-    function end_el( &$output, $category, $depth, $args ) {
-        $output .= "<div class=\"clear\"></div></li>\n";
-    }
-
-}
-
-/**
- * Displays checklist of a taxonomy
- *
- * @since 0.8
- * @param int $post_id
- * @param array $selected_cats
- */
-function wpuf_category_checklist( $post_id = 0, $selected_cats = false, $tax = 'category' ) {
-    require_once ABSPATH . '/wp-admin/includes/template.php';
-
-    $walker = new WPUF_Walker_Category_Checklist();
-
-    echo '<ul class="wpuf-category-checklist">';
-    wp_terms_checklist( $post_id, array(
-        'taxonomy' => $tax,
-        'descendants_and_self' => 0,
-        'selected_cats' => $selected_cats,
-        'popular_cats' => false,
-        'walker' => $walker,
-        'checked_ontop' => false
-    ) );
-    echo '</ul>';
-}
-
-// display msg if permalinks aren't setup correctly
-function wpuf_permalink_nag() {
-
-    if ( current_user_can( 'manage_options' ) )
-        $msg = sprintf( __( 'You need to set your <a href="%1$s">permalink custom structure</a> to at least contain <b>/&#37;postname&#37;/</b> before WP User Frontend will work properly.', 'wpuf' ), 'options-permalink.php' );
-
-    echo "<div class='wpuf-error fade'><p>$msg</p></div>";
-}
-
-//Should be fixed in 1.1-fork-2RRR-4.3 
-//if not found %postname%, shows a error msg at admin panel
-if ( !stristr( get_option( 'permalink_structure' ), '%postname%' ) ) {
-    //add_action( 'admin_notices', 'wpuf_permalink_nag', 3 );
-}
-
 function wpuf_option_values() {
     global $custom_fields;
 
@@ -642,6 +634,14 @@ function wpuf_value_travarse( $param ) {
 
 //wpuf_option_values();
 
+/**
+ * Get Custom Fields
+ *
+ * @author Tareq Hasan
+ * @global wpdb $wpdb
+ *
+ * @return array
+ */
 function wpuf_get_custom_fields() {
     global $wpdb;
 
@@ -665,6 +665,8 @@ function wpuf_get_custom_fields() {
 
 /**
  * Adds notices on add post form if any
+ *
+ * @author Tareq Hasan
  *
  * @param string $text
  * @return string
@@ -695,6 +697,8 @@ add_filter( 'wpuf_addpost_notice', 'wpuf_addpost_notice' );
 /**
  * Adds the filter to the add post form if the user can post or not
  *
+ * @author Tareq Hasan
+ *
  * @param string $perm permission type. "yes" or "no"
  * @return string permission type. "yes" or "no"
  */
@@ -721,19 +725,10 @@ function wpuf_can_post( $perm ) {
 
 add_filter( 'wpuf_can_post', 'wpuf_can_post' );
 
-function wpuf_header_css() {
-    $css = wpuf_get_option( 'custom_css' );
-    ?>
-    <style type="text/css">
-        <?php echo $css; ?>
-    </style>
-    <?php
-}
-
-add_action( 'wp_head', 'wpuf_header_css' );
-
 /**
  * Get all the image sizes
+ *
+ * @author Tareq Hasan
  *
  * @return array image sizes
  */
@@ -752,10 +747,12 @@ function wpuf_get_image_sizes() {
 /**
  * Suppress edit post link
  *
+ * @author Andrew Bruin (professor99)
+ * @since version 1.1-fork-2RRR-2.1 
+ *
  * @param string $link
  * @param int $post_id
  * @return string null
- * @since version 1.1-fork-2RRR-2.1 
  */
 function wpuf_suppress_edit_post_link( $link, $post_id ) {
     return '';
@@ -764,7 +761,12 @@ function wpuf_suppress_edit_post_link( $link, $post_id ) {
 /**
  * Fix insert media bug
  *
+ * @author Andrew Bruin (professor99)
  * @since version 1.1-fork-2RRR-4.3 
+ * @global int $wpuf_post_id
+ * @global int $post_ID
+ *
+ * @param int $post_id
  */
 function wpuf_insert_media_fix( $post_id ) {
 	global $wpuf_post_id;
@@ -783,7 +785,12 @@ function wpuf_insert_media_fix( $post_id ) {
  *
  * Fixes bug with WordPress 3.5.1
  *
+ * @author Andrew Bruin (professor99)
  * @since version 1.1-fork-2RRR-4.3 
+ *
+ * @param array $settings
+ * @param object $post
+ * @return array settings
  */
 function wpuf_insert_media_fix_filter( $settings, $post ) {
 	global $wpuf_post_id;
@@ -793,3 +800,27 @@ function wpuf_insert_media_fix_filter( $settings, $post ) {
 	
 	return $settings;
 } 
+
+/**
+ * Create wpuf localized javascript object
+ *
+ * @author Andrew Bruin (professor99)
+ * @since version 1.1-fork-2RRR-4.4 
+ */
+function wpuf_post_localize() {
+	$submit_msg = wpuf_get_option( 'submit_label' );
+	$update_msg = wpuf_get_option( 'update_label' );
+	$updating_msg = wpuf_get_option( 'updating_label' );
+	$delete_msg = wpuf_get_option( 'delete_label' );
+
+	wp_localize_script( 'wpuf-post', 'wpuf', array(
+		'ajaxurl' => admin_url( 'admin-ajax.php' ),
+		'submit_msg' => $submit_msg,
+		'update_msg' => $update_msg,
+		'updating_msg' => $updating_msg,
+		'deleteMsg' => $delete_msg,
+		'confirmMsg' => __( 'Are you sure?', 'wpuf' ),
+		'delete_confirm_msg' => __('Are you sure to delete this post?', 'wpuf' ),
+		'nonce' => wp_create_nonce( 'wpuf_nonce' ),
+	) );
+}		

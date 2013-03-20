@@ -3,12 +3,21 @@
  *
  * @author Tareq Hasan 
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-3.0
+ * @version 1.1.0-fork-2RRR-4.4
  */
  
 /*
 == Changelog ==
 
+= 1.1-fork-2RRR-4.4 professor99 =
+* Add CSS for post attachment thumbnails
+* Changed class category-wrap to id wpuf-category
+* Indented categories
+* Deleted unused wp-new-post-desc-wrap
+* Changed CSS id wpuf-post-area to wpuf
+* Added wpuf prefix to some selectors to harden style
+* Global CSS moved to wpuf-global.css
+ 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Delete button added
 * Added excerpt
@@ -16,7 +25,7 @@
 * Adjusted button margins
 * Added hover/active css for plupload
 * Added common background/focus for input/textarea/select fields
-* Used #wpuf-post-area to tighten CSS
+* Used #wpuf to tighten CSS
 * Styled for IE7,IE8,Firefox16
 * Styled for Wordpress 2010/2011 themes
 * Rearranged and commented for readability
@@ -102,22 +111,16 @@ span.required {
     font-size: 13px;
 }
 
-/* Add/Edit Post Forms */
-/* ------------------- */
+/* AddPost/EditPost/Profile/EditUser Forms */
+/* --------------------------------------- */
 
 /* General layout */
 
-.wpuf-post-form{
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.wpuf-post-form input, .wpuf-post-form select {
+#wpuf table{
     margin: 0;
 }
 
-.wpuf-post-form label {
+#wpuf label {
     float: left;
     font-weight: bold;
     height: 20px;
@@ -128,11 +131,11 @@ span.required {
     cursor: pointer;
 }
 
-#wpuf-post-area ul{
+#wpuf ul{
 	margin: 0;
 }
 
-#wpuf-post-area ul li{
+#wpuf ul li{
     list-style: none outside none;
     background: none;
     margin: 10px 0;
@@ -144,54 +147,68 @@ ul li#wpuf-submit-li{
     margin-bottom: 0px;
 }
 
+#wpuf .wpuf-post-form{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
 /* Input/select/textarea fields */
 
-#wpuf-post-area input, #wpuf-post-area select, #wpuf-post-area textarea  {
+#wpuf input, 
+#wpuf select, 
+#wpuf textarea  {
     font-size: 13px;
     font-weight: normal;
     line-height: 18px;
     color: #333333;
 }
 
-#wpuf-post-area input, #wpuf-post-area select {
+#wpuf input, 
+#wpuf select {
+    margin: 0;
     padding: 5px;
     border: 1px solid #ccc;
     -moz-border-radius: 5px;
     border-radius: 5px;
 }
 
-#wpuf-post-area input[type=checkbox]{
-    border: none;
-    padding: 0;
+#wpuf input[type=checkbox]{
     margin: 0 5px 0 0;
+    padding: 0;
+    border: none;
 }
 
-#wpuf-post-area input[type=text], #wpuf-post-area select, #wpuf-post-area textarea  {
+#wpuf input[type=text], 
+#wpuf select, 
+#wpuf textarea  {
     background: #F9F9F9;
 }
 
-#wpuf-post-area input:focus, #wpuf-post-area select:focus, #wpuf-post-area textarea:focus {
+#wpuf input:focus, 
+#wpuf select:focus, 
+#wpuf textarea:focus {
     background: #F2F2F2;
 }
 
-#wpuf-post-area input[type=text]{
+#wpuf input[type=text]{
     width: 50%;
 }
 
-#wpuf-post-area .timestamp-wrap  {
+#wpuf .timestamp-wrap  {
     font-size: 13px;
     float: left;
 }
 
-#wpuf-post-area .timestamp-wrap input[type=text] {
+#wpuf .timestamp-wrap input[type=text] {
     width: 40px !important;
 }
 
-#wpuf-post-area .timestamp-wrap input[type=checkbox] {
+#wpuf .timestamp-wrap input[type=checkbox] {
     margin-left: 10px;
 }
 
-#wpuf-post-area textarea {
+#wpuf textarea {
     margin: 5px 0 0 0;
     padding: 5px 10px;
     width: 100%;
@@ -202,13 +219,15 @@ textarea#wpuf-excerpt{
     resize: none;
 }
 
-.wpuf-textarea-container{
+#wpuf .wpuf-textarea-container{
     padding-right: 22px;
 }
 
 /* Buttons & Links (NB wpuf-submit used by wpuf-editprofile.php also */
 
-.wpuf-post-form input[type=submit], .wpuf-submit, .wpuf-button {
+#wpuf .wpuf-post-form input[type=submit],
+#wpuf .wpuf-submit,
+#wpuf .wpuf-button {
     -moz-border-radius: 5px;
     border-radius: 5px;
     color: #444!important;
@@ -226,34 +245,44 @@ textarea#wpuf-excerpt{
     line-height: 18px!important;
 }
 
-.wpuf-post-form input[type=submit]:active, .wpuf-submit:active, .wpuf-button:active, .wpuf-attachment-upload-pickfiles-active, .wpuf-ft-upload-pickfiles-active{
+#wpuf .wpuf-post-form input[type=submit]:active,
+#wpuf .wpuf-submit:active, 
+#wpuf .wpuf-button:active, 
+#wpuf .wpuf-attachment-upload-pickfiles-active, 
+#wpuf .wpuf-ft-upload-pickfiles-active{
     background: #ddd;
 }
 
-.wpuf-post-form input[type=submit]:hover, .wpuf-submit:hover, .wpuf-button:hover, .wpuf-attachment-upload-pickfiles-hover, .wpuf-ft-upload-pickfiles-hover{
+#wpuf .wpuf-post-form input[type=submit]:hover, 
+#wpuf .wpuf-submit:hover, 
+#wpuf .wpuf-button:hover, 
+#wpuf .wpuf-attachment-upload-pickfiles-hover, 
+#wpuf .wpuf-ft-upload-pickfiles-hover{
     background: #ddd; /* old browsers */
     background: -moz-linear-gradient(top, #cccccc 0%, #eeeeee 100%); /* firefox */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cccccc), color-stop(100%,#eeeeee)); /* webkit */
 }
 
 
-.wpuf-post-form a{
+#wpuf .wpuf-post-form a{
     color: #1982D1;
     text-decoration: none;
 }
 
-.wpuf-post-form  a:focus, .wpuf-post-form  a:active, .wpuf-post-form a:hover{
+#wpuf .wpuf-post-form  a:focus, 
+#wpuf .wpuf-post-form  a:active, 
+#wpuf .wpuf-post-form a:hover{
     text-decoration: underline;
 }
 
-a.wpuf-button{
+#wpuf a.wpuf-button{
     text-decoration: none;
 }
 
-a.wpuf-button:link,
-a.wpuf-button:visited,
-a.wpuf-button:hover,
-a.wpuf-button:active{
+#wpuf a.wpuf-button:link,
+#wpuf a.wpuf-button:visited,
+#wpuf a.wpuf-button:hover,
+#wpuf a.wpuf-button:active{
     color: #444444;
     text-decoration: none;	
 }
@@ -268,14 +297,14 @@ a.wpuf-button:active{
 
 /* Help Description CSS */
 
-#wpuf-post-area p.description {
+#wpuf p.description {
     color: #868686;
     margin: 0;
     padding: 3px 0 3px 140px;
     font-size: 12px;
 }
 
-#wpuf-post-area p.description-left {
+#wpuf p.description-left {
     color: #868686;
     margin: 0;
     padding: 3px 0 3px 0px;
@@ -284,22 +313,20 @@ a.wpuf-button:active{
 
 /* Editor */
 
-.wpuf-editor-plain {
+#wpuf .wpuf-editor-plain {
     margin-top: 5px!important;
     border: 1px solid #ccc;
     -moz-border-radius: 5px;
     border-radius: 5px;
 }
 
-.wpuf-post-form #wp-new-post-desc-wrap tr td {
+/* wp-wpuf-post-content-wrap created by TinyMCE */
+#wp-wpuf-post-content-wrap tr td {
     padding: 0;
 }
 
-#wpuf-post-area table{
-    margin: 0;
-}
-
-#content #editorcontainer tr td, #content #editorcontainer table {
+#wpuf  #editorcontainer tr td,
+#wpuf  #editorcontainer table {
     padding: 0;
     margin: 0;
 }
@@ -342,7 +369,7 @@ ul li#wpuf-ft-upload-li{
 
 /* Attachment CSS */
 
-.wpuf-attachments-label {
+#wpuf .wpuf-attachments-label {
     color: #888888;
     font-size: 12px;
     font-weight: bold;
@@ -351,7 +378,7 @@ ul li#wpuf-ft-upload-li{
     padding: 10px 0;
 }
 
-ul.wpuf-attachments{ 
+#wpuf ul.wpuf-attachments{ 
     list-style: square inside none;
     margin: 0;
 }
@@ -403,30 +430,34 @@ ul li#wpuf-attachment-upload-li{
 
 /* Categories */
 
-.wpuf-post-form .childCategory {
+#wpuf .wpuf-post-form .childCategory {
     padding-top: 5px;
 }
 
-.wpuf-post-form .category-wrap {
+#wpuf-category {
     position: relative;
 }
 
-.wpuf-post-form .category-wrap select {
+#wpuf-category select {
     display: block;
     margin: 0 0 5px 0;
 }
 
-.wpuf-category-checklist label {
+#wpuf-category .wpuf-category-checklist label {
     font-weight: normal;
     color: #333333
 }
 
-ul.wpuf-category-checklist {
+#wpuf-category ul.wpuf-category-checklist {
     margin: 0;
     list-style: none;
 }
 
-.wpuf-loading {
+#wpuf-category ul.wpuf-children {
+	padding-left: 15px;
+}
+
+#wpuf .wpuf-loading {
     height: 16px;
     width: 16px;
     background: url('../images/wpspin_light.gif') no-repeat;
@@ -436,40 +467,62 @@ ul.wpuf-category-checklist {
     top: 0;
     float: left;
 }
-	
+
+#wpuf-cat-lvl1 {
+	padding-left: 15px;
+}
+
+#wpuf-cat-lvl2 {
+	padding-left: 30px;
+}
+
+#wpuf-cat-lvl3 {
+	padding-left: 45px;
+}
+
+#wpuf-cat-lvl4 {
+	padding-left: 60px;
+}
+
+#wpuf-cat-lvl5 {
+	padding-left: 75px;
+}
+
 /* Edit Profile CSS */
 /* ---------------- */
 
-#content .wpuf-profile table, .wpuf-profile table{
+#wpuf  .wpuf-profile table {
     border: none;
 }
 
-#content .wpuf-profile legend, .wpuf-profile legend{
+#wpuf  .wpuf-profile legend {
     border: 1px solid #eee;
     padding: 5px 10px;
 }
 
-#content .wpuf-profile th, #content .wpuf-profile td, .wpuf-profile th, .wpuf-profile td{
+#wpuf  .wpuf-profile th,
+#wpuf  .wpuf-profile td {
     vertical-align: top;
     border-top: 1px solid #eee;
     border: none;
 }
 
-#content .wpuf-profile input, .wpuf-profile input, .wpuf-profile textarea{
+#wpuf  .wpuf-profile input,
+#wpuf  .wpuf-profile textarea {
     border: 1px solid #CCCCCC;
     margin: 0;
     padding: 5px;
 }
 
-.wpuf-profile h3, #content .wpuf-profile h3{
+#wpuf .wpuf-profile h3 {
     margin: 0;
 }
 
-.wpuf-profile table, #content .wpuf-profile table{
+#wpuf .wpuf-profile table {
     margin: 0 0 5px 0;
 }
 
-#pass-strength-result {
+#wpuf-pass-strength-result {
     border-radius: 6px 6px 6px 6px;
     border-style: solid;
     border-width: 1px;
@@ -479,23 +532,23 @@ ul.wpuf-category-checklist {
     text-align: center;
     width: 248px;
 }
-#pass-strength-result.good {
+#wpuf-pass-strength-result.good {
     background-color: #FFEC8B;
     border-color: #FFCC00 !important;
 }
-#pass-strength-result {
+#wpuf-pass-strength-result {
     background-color: #EEEEEE;
     border-color: #DDDDDD !important;
 }
-#pass-strength-result.bad {
+#wpuf-pass-strength-result.bad {
     background-color: #FFB78C;
     border-color: #FF853C !important;
 }
-#pass-strength-result.strong {
+#wpuf-pass-strength-result.strong {
     background-color: #C3FF88;
     border-color: #8DFF1C !important;
 }
-#pass-strength-result.short {
+#wpuf-pass-strength-result.short {
     background-color: #FFA0A0;
     border-color: #F04040 !important;
 }
@@ -503,29 +556,29 @@ ul.wpuf-category-checklist {
 /* Dashboard CSS */
 /* ------------- */
 
-.post_count {
+#wpuf .wpuf-post-count {
     border: 1px solid #E7E7E7;
     margin: 5px 0;
     padding: 5px;
 }
 
-.post_count span {
+#wpuf .wpuf-post-count span {
     font-weight: bold;
 }
 
 /* author info */
 
-.wpuf-author {
+#wpuf .wpuf-author {
     clear: both;
     margin: 10px 0;
 }
-.wpuf-author h3{
+#wpuf .wpuf-author h3{
     margin: 0 !important;
     background: #CFCFCF;
     text-align: left;
     padding: 3px 10px;
 }
-.wpuf-author-inside {
+#wpuf .wpuf-author-inside {
     background: none repeat scroll 0 0 #F0F0F0;
     border-bottom: 2px solid #DDDDDD;
     height: 90px;
@@ -534,21 +587,21 @@ ul.wpuf-category-checklist {
     margin-bottom: 15px;
 }
 
-.wpuf-author-inside .wpuf-user-image {
+#wpuf .wpuf-author-inside .wpuf-user-image {
     float: left;
     padding-right: 15px;
 }
-.wpuf-author-body p {
+#wpuf .wpuf-author-body p {
     margin-bottom: 10px !important;
 }
 
-.wpuf-author-body p.wpuf-user-name a {
+#wpuf .wpuf-author-body p.wpuf-user-name a {
     color: #335160;
     font-size: 1.2em;
     font-weight: bold;
 }
 
-.wpuf-author-inside p.wpuf-author-info {
+#wpuf .wpuf-author-inside p.wpuf-author-info {
     padding-top: 8px;
 }
 
@@ -600,14 +653,14 @@ ul.wpuf-category-checklist {
 /* Subscriptions */
 /* ------------- */
 
-.wpuf_sub_info {
+.wpuf-sub-info {
     padding: 0;
     margin: 10px 5px;
     border: 1px solid green;
     border-radius: 5px;
 }
 
-.wpuf_sub_info h3{
+.wpuf-sub-info h3{
     margin: 0 0 5px 0 !important;
     background: green;
     color: #fff !important;
@@ -615,17 +668,17 @@ ul.wpuf-category-checklist {
     font-weight: bold;
 }
 
-.wpuf_sub_info .text{
+.wpuf-sub-info .wpuf-sub-info-text{
     padding: 5px 10px;
 }
 
 
-ul.wpuf_packs {
+ul.wpuf-packs {
     overflow: hidden;
     margin: 35px 0 15px;
 }
 
-ul.wpuf_packs li {
+ul.wpuf-packs li {
     background: #EEEEEE;
     border: 1px solid #DDDDDD;
     border-radius: 5px 5px 5px 5px;
@@ -637,18 +690,18 @@ ul.wpuf_packs li {
     width: 200px;
 }
 
-ul.wpuf_packs h3 {
+ul.wpuf-packs h3 {
     padding: 10px !important;
     font-size: 14px;
     font-weight: bold;
 }
 
-ul.wpuf_packs p {
+ul.wpuf-packs p {
     padding: 0 10px;
     margin-bottom: 8px;
 }
 
-.wpuf_packs .cost {
+.wpuf-packs .wpuf-packs-cost {
     background: red;
     border-radius: 30px 30px 30px 30px;
     color: #FFFFFF;

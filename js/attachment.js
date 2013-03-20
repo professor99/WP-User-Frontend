@@ -3,11 +3,15 @@
  *
  * @author Tareq Hasan
  * @package WP User Frontend
- * @version 1.1-fork-2RRR-2.0 
+ * @version 1.1-fork-2RRR-4.4 
  */
  
 /*
 == Changelog ==
+
+= 1.1-fork-2RRR-4.4 professor99 =
+* Added reset function
+* WPUF_Attachment now global
 
 = 1.1-fork-2RRR-3.0 professor99 =
 * Bugfix: Fixed Flash/Silverlight button issues
@@ -19,7 +23,7 @@
 
 jQuery(document).ready(function($) {
 
-    var WPUF_Attachment = {
+    WPUF_Attachment = {
         init: function () {
             window.wpufFileCount = typeof window.wpufFileCount == 'undefined' ? 0 : window.wpufFileCount;
             this.maxFiles = parseInt(wpuf_attachment.number);
@@ -48,6 +52,8 @@ jQuery(document).ready(function($) {
             }
         },
         attachUploader: function() {
+            var self = this;
+
             if(typeof plupload === 'undefined') {
                 return;
             }
@@ -56,9 +62,9 @@ jQuery(document).ready(function($) {
                 return
             }
 
-            var attachUploader = new plupload.Uploader(wpuf_attachment.plupload);
+            this.attachUploader = new plupload.Uploader(wpuf_attachment.plupload);
 
-            $('#wpuf-attachment-upload-filelist').on('click', 'a.track-delete', attachUploader, this.removeTrack);
+            $('#wpuf-attachment-upload-filelist').on('click', 'a.track-delete', this.attachUploader, this.removeTrack);
 
             $('#wpuf-attachment-upload-filelist ul.wpuf-attachment-list').sortable({
                 cursor: 'crosshair',
@@ -66,13 +72,13 @@ jQuery(document).ready(function($) {
             });
 
             $('#wpuf-attachment-upload-pickfiles').click(function(e) {
-                attachUploader.start();
+                self.attachUploader.start();
                 e.preventDefault();
             });
 
-            attachUploader.init();
+            this.attachUploader.init();
 
-            attachUploader.bind('FilesAdded', function(up, files) {
+            this.attachUploader.bind('FilesAdded', function(up, files) {
                 $.each(files, function(i, file) {
                     $('#wpuf-attachment-upload-filelist').append(
                         '<div id="' + file.id + '">' +
@@ -82,14 +88,14 @@ jQuery(document).ready(function($) {
 
                 up.refresh(); // Reposition Flash/Silverlight
                     up.disableBrowse(true); //Disable Attachment button
-                attachUploader.start();
+                self.attachUploader.start();
             });
 
-            attachUploader.bind('UploadProgress', function(up, file) {
+            this.attachUploader.bind('UploadProgress', function(up, file) {
                 $('#' + file.id + " b").html(file.percent + "%");
             });
 
-            attachUploader.bind('Error', function(up, err) {
+            this.attachUploader.bind('Error', function(up, err) {
                 $('#wpuf-attachment-upload-filelist').append("<div>Error: " + err.code +
                     ", Message: " + err.message +
                     (err.file ? ", File: " + err.file.name : "") +
@@ -100,7 +106,7 @@ jQuery(document).ready(function($) {
                 WPUF_Attachment.hideShowUploadBtn(up);
             });
 
-            attachUploader.bind('FileUploaded', function(up, file, response) {
+            this.attachUploader.bind('FileUploaded', function(up, file, response) {
                 var resp = $.parseJSON(response.response);
                 $('#' + file.id).remove();
 
@@ -127,14 +133,21 @@ jQuery(document).ready(function($) {
                 $.post(wpuf.ajaxurl, data, function(){
                     el.parent().remove();
                     window.wpufFileCount -= 1;
-                    e.data.refresh();  // Reposition Flash/Silverlight
-                    WPUF_Attachment.hideShowUploadBtn(e.data);
+                    WPUF_Attachment.attachUploader.refresh();  // Reposition Flash/Silverlight
+                    WPUF_Attachment.hideShowUploadBtn( WPUF_Attachment.attachUploader );
                 });
             }
+        },
+        reset: function() {
+            //done on form reset
+            $('.wpuf-attachment-list li').remove();
+            window.wpufFileCount = 0;
+            WPUF_Attachment.attachUploader.refresh();  // Reposition Flash/Silverlight
+            WPUF_Attachment.hideShowUploadBtn( WPUF_Attachment.attachUploader );
         }
+
     };
 
     //run the bootstrap
     WPUF_Attachment.init();
-
 });
