@@ -741,7 +741,7 @@ class WPUF_Add_Post {
 		}
 
 		//validate categories
-		$post_category = $wpuf_cat->validate( $_POST['category'], &$errors );
+		$post_category = $wpuf_cat->validate( $_POST['category'], $errors );
 
 		//validate post content
 		if ( empty( $content ) ) {
